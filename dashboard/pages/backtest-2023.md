@@ -11,8 +11,8 @@ title: 2023 case study
 ## Would this screen have flagged the 2023 bank failures?
 
 This page freezes the composite screen at **2022-06-30** — using only report dates
-on or before that quarter — and shows where the banks that failed in 2023 ranked
-among their peers nine months earlier.
+on or before that quarter — and shows where the banks at the center of the 2023
+banking stress ranked among their peers nine months earlier.
 
 _Preliminary exhibit: the full reproducible backtest, methodology narrative, and
 false-positive analysis are in progress. Two honesty notes apply to everything
@@ -37,31 +37,40 @@ join fdic.dim_banks b using (cert)
 where o.report_date = '2022-06-30'
 ```
 
-```sql labeled
-select bank_name, peer_band, composite_score, rank_in_band, band_size,
+## The 2023 events
+
+The label set is the three 2023 failures large enough for this project's $1B
+scope, plus Silvergate's voluntary liquidation, labeled separately because it
+does not appear in FDIC failure data.
+
+```sql labeled_2023
+select bank_name, peer_band, composite_score,
+       rank_in_band || ' of ' || band_size as rank_in_band_display,
        case cert
-           when 27330 then 'Voluntary liquidation (Mar 2023)'
+           when 27330 then 'Liquidated Mar 2023'
            else 'Failed ' || strftime(failure_date, '%b %Y')
        end as outcome
 from ${frozen}
-where is_failed or cert = 27330
+where (is_failed and date_part('year', failure_date) = 2023) or cert = 27330
 order by composite_score desc
 ```
 
-<DataTable data={labeled}>
+<DataTable data={labeled_2023}>
     <Column id=bank_name/>
     <Column id=outcome/>
     <Column id=peer_band title="Band"/>
-    <Column id=composite_score title="Composite (2022-Q2)" fmt='#,##0.00'/>
-    <Column id=rank_in_band title="Rank in band"/>
-    <Column id=band_size title="Band size"/>
+    <Column id=composite_score title="Composite" fmt='#,##0.00'/>
+    <Column id=rank_in_band_display title="Rank in band"/>
 </DataTable>
 
 ## The frozen 2022-Q2 distribution, all banks
 
 ```sql top_frozen
-select bank_name, peer_band, composite_score, rank_in_band, band_size,
-       case when is_failed then 'Failed in 2023' when cert = 27330 then 'Voluntarily liquidated' else '' end as note
+select bank_name, peer_band, composite_score,
+       rank_in_band || ' of ' || band_size as rank_display,
+       case when is_failed and date_part('year', failure_date) = 2023 then 'Failed in 2023'
+            when cert = 27330 then 'Voluntarily liquidated'
+            else '' end as note
 from ${frozen}
 where rank_in_band <= 10
 order by peer_band, rank_in_band
@@ -69,7 +78,7 @@ order by peer_band, rank_in_band
 
 <DataTable data={top_frozen} rows=30 groupBy=peer_band>
     <Column id=bank_name/>
-    <Column id=rank_in_band title="Rank"/>
+    <Column id=rank_display title="Rank"/>
     <Column id=composite_score title="Composite" fmt='#,##0.00'/>
     <Column id=note title="2023 outcome"/>
 </DataTable>
@@ -82,17 +91,39 @@ order by peer_band, rank_in_band
 - **Silvergate Bank** wound down voluntarily in March 2023 and therefore does not
   appear in the FDIC failures data; it is labeled separately above rather than
   silently mixed in.
-- **Republic Bank (Philadelphia)** failed in April 2024 — after the 2023 events
-  this case study is built around. It appears in the labeled table for
-  completeness because it is in the failure data, not as part of the 2023 label
-  set; at the 2022-Q2 freeze it ranked 86th of 826 in its band, and that result
-  is reported as-is.
 - Banks listed without a note are **currently operating institutions**; their
   position in a 2022 distribution is a peer-relative statistic from that quarter's
   filings — nothing more.
 
+## Out-of-window check: Republic Bank (April 2024)
+
+One in-scope bank failed *after* the 2023 window this case study is built
+around: Republic Bank of Philadelphia (FDIC cert 27332, $5.9B at failure,
+April 2024). It is not part of the label set — the screen was assembled around
+the 2023 events — but pretending it doesn't exist would be curation, so its
+frozen-quarter result is reported here as-is: at 2022-06-30 the composite placed
+it outside the top decile of its band. Whatever that says about the screen's
+reach beyond its design window belongs in the limitations discussion, not in a
+quiet omission.
+
+```sql republic
+select bank_name, peer_band, composite_score,
+       rank_in_band || ' of ' || band_size as rank_in_band_display,
+       'Failed ' || strftime(failure_date, '%b %Y') as outcome
+from ${frozen}
+where cert = 27332
+```
+
+<DataTable data={republic}>
+    <Column id=bank_name/>
+    <Column id=outcome/>
+    <Column id=peer_band title="Band"/>
+    <Column id=composite_score title="Composite" fmt='#,##0.00'/>
+    <Column id=rank_in_band_display title="Rank in band"/>
+</DataTable>
+
 ---
 
 _Failure language on this page refers only to institutions that actually failed
-or closed in 2023. For all operating banks: peer-relative statistics, not
-assessments of safety or soundness._
+or closed. For all operating banks: peer-relative statistics, not assessments of
+safety or soundness._
