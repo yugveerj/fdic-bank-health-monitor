@@ -1,0 +1,53 @@
+# Builds the Evidence dashboard and publishes it to GitHub Pages.
+# Adapted from https://docs.evidence.dev/deployment/self-host/github-pages
+# (Evidence lives in dashboard/, so npm steps run there and the artifact
+# path includes the EVIDENCE_BUILD_DIR subfolder set in package.json.)
+name: Deploy dashboard
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dependencies
+        working-directory: dashboard
+        run: npm ci
+
+      - name: Build
+        working-directory: dashboard
+        env:
+          BASE_PATH: '/${{ github.event.repository.name }}'
+        run: |
+          npm run sources
+          npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'dashboard/build/fdic-bank-health-monitor'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
