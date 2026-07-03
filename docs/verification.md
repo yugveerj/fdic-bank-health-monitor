@@ -1,0 +1,44 @@
+# Data verification
+
+How I convinced myself the ingested data is the same data the FDIC publishes.
+Last full check: 2026-07-03, against the freshest quarter then available (2025-Q4).
+
+## Three-bank cross-check (total assets, total deposits, ROA)
+
+Warehouse values after a from-scratch ingest, compared against independent live API
+requests made outside the ingestion code path. Dollar amounts are thousands, as the
+FDIC reports them; ROA is percent.
+
+| Bank | CERT | Quarter | Total assets | Total deposits | ROA | API re-check | BankFind UI |
+|---|---|---|---|---|---|---|---|
+| JPMorgan Chase Bank, N.A. | 628 | 2025-Q4 | 3,752,662,000 | 2,697,842,000 | 1.3449 | ✅ match | ⬜ |
+| Western Alliance Bank | 57512 | 2025-Q4 | 92,735,703 | 77,639,392 | 1.1029 | ✅ match | ⬜ |
+| Heritage Bank, Inc. | 33119 | 2025-Q4 | 2,094,353 | 1,932,253 | 1.0850 | ✅ match | ⬜ |
+
+<!-- TODO(revise) -->
+The BankFind UI column is my eyeball check against https://banks.data.fdic.gov/bankfind-suite/
+(search each bank, compare the same three figures for Q4 2025) — ticking those boxes is a
+manual browser step I do myself.
+
+## Failed-bank history (the backtest depends on this)
+
+The screen must see 2019–2022 data for banks that no longer exist. Verified in the
+warehouse after ingest:
+
+- **Silicon Valley Bank (CERT 24735)** — all 16 quarters, 2019-Q1 through 2022-Q4.
+  2022-Q4 total assets: 209,026,000 ($209.0B), exactly matching the `QBFASSET`
+  value on its `/failures` record.
+- **Signature Bank (CERT 57053)** — 16 quarters through 2022-Q4.
+- **First Republic Bank (CERT 59017)** — 17 quarters (it filed 2023-Q1 before
+  failing on 2023-05-01).
+- **Heartland Tri-State Bank and Citizens Bank (2023)** — 0 quarters, correctly:
+  both were far below the $1B scope threshold in every quarter.
+- **Silvergate Bank (CERT 27330)** — inactive (`ACTIVE=0`) in institutions but
+  absent from `/failures`, as expected for a voluntary liquidation. Anything that
+  needs "every closed bank" must use `ACTIVE`, not the failures table.
+
+## Idempotency
+
+Immediately re-running `uv run python -m ingestion.run_all` leaves every table's
+row count unchanged (institutions 27,836; financials 28,369; failures 4,115) —
+upserts are keyed, not appended.

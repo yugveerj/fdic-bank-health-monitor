@@ -46,6 +46,14 @@ Copy `.env.example` to `.env` and fill in your keys — nothing secret is commit
 
 _I log real data-quality catches here as they happen. Bank data will not be clean._
 
+- **2026-07-03 — NULL certificate numbers in Depression-era failure records.** My
+  upsert guard rejects batches with duplicate keys, and the very first `/failures`
+  load tripped it: 53 collisions on `(CERT, FAILDATE)`. The cause is 1930s failure
+  records with no certificate number — six different banks all "failed" on
+  1936-12-21 with `CERT` null. The fix: key failure records on the API's own `ID`
+  field, which is unique on all 4,115 rows. The lesson I'm keeping: never assume a
+  natural key holds across ninety years of records.
+
 ## Decisions
 
 Why I made the architecture calls I made, newest first.
