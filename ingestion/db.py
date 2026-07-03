@@ -23,6 +23,12 @@ def connect(db_path: str | None = None) -> duckdb.DuckDBPyConnection:
         token = os.environ.get("MOTHERDUCK_TOKEN")
         if token:
             os.environ.setdefault("motherduck_token", token)
+        # attaching a nonexistent MotherDuck database fails — create it first
+        db_name = target[3:].split("?")[0]
+        if db_name:
+            boot = duckdb.connect("md:")
+            boot.execute(f'CREATE DATABASE IF NOT EXISTS "{db_name}"')
+            boot.close()
     else:
         Path(target).parent.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(target)
