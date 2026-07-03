@@ -34,11 +34,16 @@ point-in-time reconstruction._
 ## How to run
 
 ```bash
-uv sync                              # Python env (uv installs the pinned 3.13)
-uv run python -m ingestion.run_all   # full ingestion (idempotent, safe to re-run)
-cd dbt && uv run dbt build           # models + tests
-cd dashboard && npm run sources && npm run dev   # local dashboard preview
+uv sync                                        # Python env (uv installs the pinned 3.13)
+uv run python -m ingestion.run_all             # full ingestion (idempotent, safe to re-run)
+cd dbt && DBT_PROFILES_DIR=. uv run dbt build  # models + tests (local DuckDB by default)
+cd .. && uv run python -m scripts.export_dashboard_db   # marts -> dashboard source
+cd dashboard && npm run sources && npm run dev # local dashboard preview
 ```
+
+In CI the same steps run against MotherDuck (`DBT_TARGET=md`); pushes rebuild the
+site from the warehouse, and only the scheduled/manual refresh re-ingests from
+the FDIC API.
 
 Copy `.env.example` to `.env` and fill in your keys — nothing secret is committed.
 
@@ -60,6 +65,16 @@ _I log real data-quality catches here as they happen. Bank data will not be clea
   filers report financials but aren't chartered US banks. The analytical universe is
   now defined as "institutions in the FDIC registry" — the raw layer keeps everything,
   the fact model applies the rule.
+
+- **2026-07-03 — A z-score cap that erased the differences it was built to show.**
+  I winsorize peer z-scores at ±5 so a single wild value can't dominate the
+  composite — standard practice, but I checked what it does on my actual data:
+  16% of brokered-deposit-share observations sit at exactly +5, because a third of
+  $1–10B banks hold zero brokered deposits, which crushes the band's MAD and makes
+  anything above ~18% share saturate. A 20%-brokered bank and a 99%-brokered bank
+  were scoring identically. The composite keeps the cap (stability is the point);
+  I added an unclamped z column so drill-downs keep their resolution, and the
+  saturation is documented as a known limitation of the method.
 
 - **2026-07-03 — NULL certificate numbers in Depression-era failure records.** My
   upsert guard rejects batches with duplicate keys, and the very first `/failures`
