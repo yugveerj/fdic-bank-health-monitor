@@ -1,7 +1,8 @@
-"""Hello-world test: proves the CI test path works end to end before real code exists."""
+"""Package smoke test: entry point exists and is importable (never executed here —
+running it performs a real ingestion)."""
 
 from ingestion import run_all
 
 
-def test_run_all_entry_point_exists():
-    assert run_all.main() == 0
+def test_entry_point_shape():
+    assert callable(run_all.main)
