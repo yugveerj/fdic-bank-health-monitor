@@ -13,9 +13,6 @@ ingestion/raw/*
 !ingestion/raw/.gitkeep
 *.duckdb
 *.duckdb.wal
-# Exception: Evidence template demo source (1.3 MB) — CI needs it to build the
-# starter dashboard; removed when real data sources land
-!dashboard/sources/**/*.duckdb
 
 # dbt
 dbt/target/

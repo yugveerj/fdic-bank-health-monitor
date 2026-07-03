@@ -1,0 +1,4 @@
+name: fdic
+type: duckdb
+options:
+  filename: fdic.duckdb
