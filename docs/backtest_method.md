@@ -39,3 +39,20 @@ response on 2026-07-03. Dollar levels are thousands; ratio fields are percent.
 <!-- TODO(revise) -->
 _Filled in when the screen is implemented, with a one-sentence rationale per
 direction._
+
+## Methodology caveats accumulating for the limitations section
+
+- **Winsorization saturates on zero-inflated metrics.** About a third of $1–10B
+  banks hold zero brokered deposits, which makes the band's MAD tiny; ~16% of
+  brokered-share observations clamp at exactly z = +5, so very different extremes
+  share one value in the composite. `robust_z_unclamped` preserves the resolution
+  for drill-downs; the composite keeps the spec's ±5 cap deliberately.
+- **The 3-year growth metric is an incumbents-only benchmark.** It needs 12 quarters
+  of >$1B history, so recent threshold-crossers — often the fastest growers — have
+  no value, and peer medians for growth exclude them mechanically.
+- **Uninsured-deposit share uses `DEPUNINS`** (the FDIC's own estimate, domestic +
+  insured-branch scope). `DEPUNA` (domestic offices only) is also ingested; for the
+  banks checked so far the two are equal.
+- **Composites are means over available metrics** (`n_screen_metrics` records how
+  many); pre-2022 quarters typically rest on 5 of 6 because 3-year growth is not
+  yet computable in a panel that starts 2019.

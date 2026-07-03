@@ -46,6 +46,21 @@ Copy `.env.example` to `.env` and fill in your keys — nothing secret is commit
 
 _I log real data-quality catches here as they happen. Bank data will not be clean._
 
+- **2026-07-03 — "Failed" banks that are alive and enormous.** While stress-testing
+  the failure labels I found five currently active banks — Citibank and Bank of
+  America among them — marked as failed. The FDIC endpoint is really "failures *and
+  assistance*": it includes open-bank ASSISTANCE events (Citibank 2008, FirstBank
+  Puerto Rico 1981) alongside true failures. My `is_failed` flag now requires
+  `resolution_type = 'FAILURE'`. Without this, the 2023 backtest labels — and the
+  rule that operating banks are never described as failed — would both have broken.
+
+- **2026-07-03 — Insured filers that aren't banks.** A dbt relationship test failed
+  on 123 bank-quarters whose certificate has no institutions record. They're real:
+  Bank of China's US branch, Depository Trust Co, and four other insured non-bank
+  filers report financials but aren't chartered US banks. The analytical universe is
+  now defined as "institutions in the FDIC registry" — the raw layer keeps everything,
+  the fact model applies the rule.
+
 - **2026-07-03 — NULL certificate numbers in Depression-era failure records.** My
   upsert guard rejects batches with duplicate keys, and the very first `/failures`
   load tripped it: 53 collisions on `(CERT, FAILDATE)`. The cause is 1930s failure
