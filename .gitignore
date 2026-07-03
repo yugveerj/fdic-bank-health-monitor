@@ -1,0 +1,32 @@
+# Secrets — never committed
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Data: raw API cache (can be large) and local DuckDB files
+ingestion/raw/*
+!ingestion/raw/.gitkeep
+*.duckdb
+*.duckdb.wal
+# Exception: Evidence template demo source (1.3 MB) — CI needs it to build the
+# starter dashboard; removed when real data sources land
+!dashboard/sources/**/*.duckdb
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
+# Node / Evidence
+node_modules/
+dashboard/.evidence/
+dashboard/build/
+dashboard/.svelte-kit/
+
+# OS
+.DS_Store
