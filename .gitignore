@@ -27,3 +27,4 @@ dashboard/.svelte-kit/
 
 # OS
 .DS_Store
+dbt/.user.yml
