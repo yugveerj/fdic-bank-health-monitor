@@ -1,0 +1,14 @@
+# Target switches by env var so the same project builds locally and in CI:
+#   local (default) -> ../warehouse.duckdb
+#   md              -> MotherDuck, token from MOTHERDUCK_TOKEN
+fdic_bank_health:
+  target: "{{ env_var('DBT_TARGET', 'local') }}"
+  outputs:
+    local:
+      type: duckdb
+      path: "../warehouse.duckdb"
+      threads: 4
+    md:
+      type: duckdb
+      path: "md:fdic_bank_health?motherduck_token={{ env_var('MOTHERDUCK_TOKEN') }}"
+      threads: 4

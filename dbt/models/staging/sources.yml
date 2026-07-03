@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: raw_fdic
+    description: Raw FDIC BankFind Suite API data, landed by ingestion/run_all.py
+    schema: main
+    freshness:
+      warn_after: {count: 130, period: day}   # quarterly data + ~60-day publication lag
+      error_after: {count: 200, period: day}
+    loaded_at_field: "strptime(REPDTE, '%Y%m%d')"
+    tables:
+      - name: raw_fdic_financials
+        description: One row per bank-quarter, banks > $1B in any quarter since 2019-Q1
+      - name: raw_fdic_institutions
+        description: One row per FDIC-insured institution, active and inactive
+        freshness: null
+      - name: raw_fdic_failures
+        description: One row per failure event since 1934
+        freshness: null

@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_fdic__financials
+    description: Typed bank-quarter financials. Dollar fields in thousands, ratios in percent.
+    columns:
+      - name: cert
+        tests: [not_null]
+      - name: report_date
+        tests: [not_null]
+
+  - name: stg_fdic__institutions
+    description: Typed institution attributes, active and inactive.
+    columns:
+      - name: cert
+        tests: [unique, not_null]
+
+  - name: stg_fdic__failures
+    description: Typed failure events. cert can be NULL on Depression-era records.
+    columns:
+      - name: failure_id
+        tests: [unique, not_null]

@@ -1,0 +1,16 @@
+name: fdic_bank_health
+version: "1.0"
+profile: fdic_bank_health
+
+model-paths: ["models"]
+test-paths: ["tests"]
+target-path: target
+
+models:
+  fdic_bank_health:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table

@@ -1,0 +1,200 @@
+version: 2
+
+models:
+  - name: dim_banks
+    description: One row per institution in the financials scope, with failure attributes.
+    columns:
+      - name: cert
+        description: FDIC certificate number — the bank's stable identifier.
+        tests: [unique, not_null]
+      - name: bank_name
+        description: Legal institution name from the FDIC registry.
+        tests: [not_null]
+      - name: city
+        description: Headquarters city.
+      - name: state_code
+        description: Two-letter headquarters state.
+      - name: state_name
+        description: Full headquarters state name.
+      - name: bank_class
+        description: FDIC charter class code (N, NM, SB, SM, ...).
+      - name: is_active
+        description: Whether the charter is currently active (ACTIVE=1 at the FDIC).
+      - name: established_date
+        description: Charter establishment date.
+      - name: end_of_existence_date
+        description: Date the charter ceased to exist (merger, failure, liquidation); null if active.
+      - name: website
+        description: Institution website as registered with the FDIC.
+      - name: current_assets
+        description: Latest reported total assets, thousands of dollars.
+      - name: current_deposits
+        description: Latest reported total deposits, thousands of dollars.
+      - name: is_failed
+        description: >
+          True only for actual FAILURE resolutions. The FDIC failures endpoint also
+          carries open-bank ASSISTANCE records (several currently active banks have
+          1980s-2000s assistance events); those do NOT set this flag. Voluntary
+          liquidations are false here but inactive.
+      - name: failure_date
+        description: Failure date if is_failed.
+      - name: resolution_type
+        description: FDIC resolution type for the failure (e.g. FAILURE).
+      - name: assets_at_failure
+        description: Total assets on the failure record (QBFASSET), thousands.
+
+  - name: fct_bank_quarters
+    description: Grain bank x quarter — every level, ratio, growth rate and the peer band.
+    columns:
+      - name: bank_quarter_key
+        description: Surrogate key cert_YYYYMMDD enforcing the grain.
+        tests: [unique, not_null]
+      - name: cert
+        description: FDIC certificate number.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_banks')
+              field: cert
+      - name: report_date
+        description: Quarter-end report date.
+        tests: [not_null]
+      - name: quarter_index
+        description: year*4 + quarter — arithmetic-safe quarter sequence used for lags.
+      - name: total_assets
+        description: Total assets (ASSET), thousands.
+      - name: total_deposits
+        description: Total deposits (DEP), thousands.
+      - name: equity
+        description: Equity capital (EQ), thousands.
+      - name: net_loans_leases
+        description: Net loans and leases (LNLSNET), thousands.
+      - name: securities
+        description: Total securities (SC), thousands.
+      - name: brokered_deposits
+        description: Brokered deposits (BRO), thousands.
+      - name: uninsured_deposits_est
+        description: FDIC-estimated uninsured deposits (DEPUNINS), thousands.
+      - name: roa_pct
+        description: Return on assets (ROA), percent.
+      - name: roe_pct
+        description: Return on equity (ROE), percent.
+      - name: net_interest_margin_pct
+        description: Net interest margin (NIMY), percent.
+      - name: efficiency_ratio_pct
+        description: Efficiency ratio (EEFFR), percent — lower is leaner.
+      - name: noninterest_income_ratio_pct
+        description: Noninterest income ratio (NONIIR), percent.
+      - name: cost_of_funds_pct
+        description: Interest expense to earning assets (INTEXPY), percent.
+      - name: noncurrent_loans_ratio_pct
+        description: Noncurrent loans / gross loans (NCLNLSR), percent.
+      - name: net_chargeoffs_ratio_pct
+        description: Net charge-offs ratio (NTLNLSCOR), percent.
+      - name: nonperforming_assets_ratio_pct
+        description: Nonperforming assets / total assets (NPERFV), percent.
+      - name: cet1_ratio_pct
+        description: Common equity tier 1 ratio (RBCT1CER), percent.
+      - name: total_rbc_ratio_pct
+        description: Total risk-based capital ratio (RBCRWAJ), percent.
+      - name: leverage_ratio_pct
+        description: Leverage ratio (RBC1AAJ), percent.
+      - name: equity_to_assets
+        description: EQ / ASSET, as a fraction.
+      - name: loans_to_deposits
+        description: LNLSNET / DEP, as a fraction.
+      - name: securities_to_assets
+        description: SC / ASSET, as a fraction.
+      - name: brokered_deposit_share
+        description: BRO / DEP, as a fraction.
+      - name: uninsured_deposit_share
+        description: DEPUNINS / DEP, as a fraction.
+      - name: asset_growth_qoq
+        description: Quarter-over-quarter asset growth; null if the prior quarter is out of scope.
+      - name: asset_growth_yoy
+        description: Year-over-year asset growth (exact 4-quarter comparison).
+      - name: asset_growth_3y_cagr
+        description: Three-year compound annual asset growth (exact 12-quarter comparison).
+      - name: deposit_growth_yoy
+        description: Year-over-year deposit growth.
+      - name: nim_trend_4q
+        description: Slope of NIM over the trailing 4 quarters (pct points per quarter); null unless all 4 present.
+      - name: peer_band
+        description: Asset band this quarter — $1B-$10B, $10B-$100B, or >$100B.
+      - name: likely_merger_quarter
+        description: >
+          True when QoQ asset growth exceeds 25% — step-change growth that usually
+          marks an acquisition rather than organic growth. NULL when QoQ growth is
+          unobservable (first in-scope quarter or a gap re-entry): unknown is not
+          the same as false.
+
+  - name: mart_peer_percentiles
+    description: >
+      Grain bank x metric x quarter. Peer-relative robust statistics within the
+      quarter's asset band: median, MAD, and the winsorized robust z-score.
+      Statistical descriptions only — not assessments of safety or soundness.
+    columns:
+      - name: cert
+        description: FDIC certificate number.
+        tests: [not_null]
+      - name: report_date
+        description: Quarter-end report date.
+      - name: peer_band
+        description: Asset band the statistics are computed within.
+        tests: [not_null]
+      - name: metric
+        description: Metric name from fct_bank_quarters.
+        tests: [not_null]
+      - name: value
+        description: The bank's own value for this metric.
+      - name: peer_median
+        description: Median across the peer band for this metric and quarter.
+      - name: peer_mad
+        description: Median absolute deviation across the peer band.
+      - name: robust_z
+        description: >
+          (value - peer_median) / (1.4826 * MAD), winsorized to [-5, 5]; null when
+          MAD = 0. Note z = ±5 is a saturation bucket, not a measurement: on
+          zero-inflated metrics (brokered-deposit share especially, where ~16% of
+          rows clamp) very different extremes share the boundary value. Use
+          robust_z_unclamped when rank resolution among extremes matters.
+      - name: robust_z_unclamped
+        description: The same robust z without the ±5 winsorization, for drill-downs and rank analysis among extreme values.
+
+  - name: mart_outlier_flags
+    description: >
+      Grain bank x quarter. Composite outlier score — the mean of risk-signed
+      robust z-scores over the six screen metrics — with per-metric contributions.
+      Peer-relative statistics, not assessments of safety or soundness.
+    columns:
+      - name: cert
+        description: FDIC certificate number.
+        tests: [not_null]
+      - name: report_date
+        description: Quarter-end report date.
+        tests: [not_null]
+      - name: peer_band
+        description: Asset band the z-scores were computed within.
+      - name: composite_score
+        description: >
+          Mean of available risk-signed z-scores; positive = riskier than peers on
+          the screen's definitions. Composites resting on fewer metrics have higher
+          variance — filter or annotate with n_screen_metrics when comparing.
+      - name: n_screen_metrics
+        description: >
+          How many of the six screen metrics had a computable z. Roughly half of
+          bank-quarters lack the 3-year growth metric (the panel starts 2019, and
+          the >$1B scope creates history gaps), so 5 is the common value before
+          2022; treat low-n composites with care.
+      - name: z_uninsured_share
+        description: Risk-signed z for uninsured-deposit share (+ = higher share than peers).
+      - name: z_brokered_share
+        description: Risk-signed z for brokered-deposit share (+ = higher share).
+      - name: z_securities_share
+        description: Risk-signed z for securities/assets (+ = more duration exposure).
+      - name: z_asset_growth_3y
+        description: Risk-signed z for 3-year asset growth (+ = faster growth).
+      - name: z_nim_trend
+        description: Risk-signed z for the NIM 4-quarter trend (sign flipped — deteriorating margin scores positive).
+      - name: z_equity_ratio
+        description: Risk-signed z for equity/assets (sign flipped — thin capital scores positive).
