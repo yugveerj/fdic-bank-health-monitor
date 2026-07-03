@@ -18,7 +18,12 @@ DEFAULT_DB_PATH = "warehouse.duckdb"
 def connect(db_path: str | None = None) -> duckdb.DuckDBPyConnection:
     """Open the warehouse. Precedence: explicit arg > FDIC_DB_PATH env > local default."""
     target = db_path or os.environ.get("FDIC_DB_PATH", DEFAULT_DB_PATH)
-    if not target.startswith("md:"):
+    if target.startswith("md:"):
+        # the MotherDuck extension reads its token from this env var
+        token = os.environ.get("MOTHERDUCK_TOKEN")
+        if token:
+            os.environ.setdefault("motherduck_token", token)
+    else:
         Path(target).parent.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(target)
 
