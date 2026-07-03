@@ -1,13 +1,14 @@
-# The full data pipeline + deploy, on every push to main:
-#   ingest FDIC data into MotherDuck -> dbt build (models + tests) -> dbt docs
-#   -> Evidence static build -> one GitHub Pages artifact (site + /dbt-docs/).
-# The scheduled refresh jobs will reuse this exact path via workflow_dispatch.
+# Rebuild and deploy the site FROM THE WAREHOUSE — no FDIC API calls here.
+# Pushes to main rebuild models/docs/dashboard against MotherDuck as-is;
+# only the refresh workflow (schedule / manual) re-ingests source data and
+# then calls this one.
 name: Deploy dashboard
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build:
@@ -26,9 +27,6 @@ jobs:
       - name: Install Python project
         run: uv sync --locked
 
-      - name: Ingest FDIC data into MotherDuck
-        run: uv run python -m ingestion.run_all
-
       - name: dbt build (models + tests)
         working-directory: dbt
         run: DBT_PROFILES_DIR=. uv run dbt build
@@ -36,6 +34,9 @@ jobs:
       - name: dbt docs
         working-directory: dbt
         run: DBT_PROFILES_DIR=. uv run dbt docs generate --static
+
+      - name: Export dashboard marts from the warehouse
+        run: uv run python -m scripts.export_dashboard_db
 
       - uses: actions/setup-node@v4
         with:
