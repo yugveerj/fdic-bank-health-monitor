@@ -13,14 +13,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # serialize warehouse writes: a push-triggered build and a refresh-triggered
-    # build both run `dbt build` against the one shared MotherDuck warehouse, so
-    # they must not overlap. Job-level on purpose (workflow-level is ignored under
-    # workflow_call) and a DIFFERENT group from the deploy guard — sharing the
-    # pages-deploy group would deadlock deployments.
-    concurrency:
-      group: warehouse-build
-      cancel-in-progress: false
     permissions:
       contents: read
     env:
