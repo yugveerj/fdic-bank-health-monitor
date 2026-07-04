@@ -8,8 +8,10 @@ dependencies = [
     "dbt-core>=1.11.12",
     "dbt-duckdb>=1.10.1",
     "duckdb>=1.5.4",
+    "google-cloud-bigquery>=3.42.1",
     "httpx>=0.28.1",
     "pandas>=3.0.3",
+    "pyarrow>=24.0.0",
     "python-dotenv>=1.2.2",
 ]
 

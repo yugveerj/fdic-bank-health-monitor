@@ -18,7 +18,7 @@ import httpx
 import pandas as pd
 
 from ingestion import cache
-from ingestion.db import connect, upsert
+from ingestion.bq import connect, ensure_table, upsert
 
 log = logging.getLogger(__name__)
 
@@ -56,11 +56,9 @@ def _empty_frame() -> pd.DataFrame:
     return pd.DataFrame(columns=["series_id", "series_title", "obs_date", "value"])
 
 
-def ingest(con) -> int:
+def ingest(wh) -> int:
     if not os.environ.get("FRED_API_KEY"):
-        con.register("_empty", _empty_frame())
-        con.execute(f'CREATE TABLE IF NOT EXISTS "{TABLE}" AS SELECT * FROM _empty')
-        con.unregister("_empty")
+        ensure_table(wh, TABLE, _empty_frame())
         log.warning("FRED_API_KEY not set — created empty %s and skipped ingestion", TABLE)
         return 0
 
@@ -89,7 +87,7 @@ def ingest(con) -> int:
                 for o in obs["observations"]
             ]
             df = pd.DataFrame(rows) if rows else _empty_frame()
-            written += upsert(con, TABLE, df, KEYS)
+            written += upsert(wh, TABLE, df, KEYS)
             log.info("fred %s: %d observations", series_id, len(df))
     return written
 
@@ -99,11 +97,11 @@ def main() -> int:
     from dotenv import load_dotenv
 
     load_dotenv()
-    con = connect()
+    wh = connect()
     try:
-        ingest(con)
+        ingest(wh)
     finally:
-        con.close()
+        wh.close()
     return 0
 
 

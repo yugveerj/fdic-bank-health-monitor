@@ -13,9 +13,9 @@ import logging
 
 import pandas as pd
 
+from ingestion.bq import upsert
 from ingestion.client import FdicClient
 from ingestion.config import FINANCIAL_FIELDS, FIRST_QUARTER_END, MIN_ASSET_THOUSANDS
-from ingestion.db import upsert
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def quarter_ends(start: str = FIRST_QUARTER_END, today: dt.date | None = None) -
     return out
 
 
-def ingest(client: FdicClient, con) -> int:
+def ingest(client: FdicClient, wh) -> int:
     written = 0
     for q in quarter_ends():
         rows = client.fetch_all(
@@ -50,6 +50,6 @@ def ingest(client: FdicClient, con) -> int:
             log.info("financials %s: no rows (quarter not yet published)", q)
             continue
         df = pd.DataFrame(rows).reindex(columns=FINANCIAL_FIELDS)
-        written += upsert(con, TABLE, df, KEYS)
+        written += upsert(wh, TABLE, df, KEYS)
         log.info("financials %s: %d rows", q, len(df))
     return written
