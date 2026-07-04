@@ -24,3 +24,15 @@ jobs:
 
       - name: Test
         run: uv run pytest
+
+      # full dbt build on a committed sample of real API rows — never touches
+      # the FDIC API and needs no secrets, so it runs on fork PRs too
+      - name: Build fixture warehouse
+        run: uv run python -m scripts.build_ci_warehouse
+
+      - name: dbt build (models + tests on the fixture)
+        working-directory: dbt
+        env:
+          DBT_TARGET: backtest
+          BACKTEST_DB_PATH: ../ci_warehouse.duckdb
+        run: DBT_PROFILES_DIR=. uv run dbt build

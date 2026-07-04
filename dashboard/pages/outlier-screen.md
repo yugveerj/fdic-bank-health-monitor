@@ -66,6 +66,18 @@ Composites resting on fewer than six metrics (see the Metrics column) carry more
 noise; the three-year growth metric in particular requires twelve quarters of
 in-scope history.
 
+## How an analyst would use this
+
+1. Pick your size band and sort by composite. The shortlist is the top handful,
+   plus anything that moved sharply since the prior quarter.
+2. For each name, read the per-metric columns: which of the six put it there,
+   and is any of them sitting at the +5 cap, where saturation can inflate a
+   score?
+3. Open the bank's profile page for trend context. A level, a trend, and one
+   strange quarter are three different conversations.
+4. Take what survives to primary sources: the call report, the filings, the
+   footnotes. The screen's job ends where the reading begins.
+
 ---
 
 **Peer-relative statistics only. Nothing on this page is an assessment of any

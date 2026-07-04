@@ -15,6 +15,15 @@ banks that failed in 2023? Mostly, yes. One important miss. The case study cover
 Everything updates itself. Weekly aggregates from the Federal Reserve, quarterly
 filings from the FDIC, no hands on the wheel.
 
+## What the screen found
+
+Frozen at June 2022, nine months before the first failure, the screen ranked
+Silicon Valley Bank 1st of 35 in its size group and Signature Bank 2nd. First
+Republic ranked 8th, a miss [the case study](/backtest-2023) spends real time
+on. The data itself fought back too: federal failure records briefly labeled
+Citibank as failed, which is why this pipeline
+[tests its data](/data-quality).
+
 ```sql latest
 select max(report_date) as latest_quarter from fdic.fct_bank_quarters
 ```
@@ -31,7 +40,7 @@ from fdic.fct_bank_quarters
 where report_date = (select latest_quarter from ${latest})
 ```
 
-<BigValue data={kpis} value=banks_reporting title="Banks > $1B reporting"/>
+<BigValue data={kpis} value=banks_reporting title="Banks reporting (latest quarter)"/>
 <BigValue data={kpis} value=sector_assets_t fmt='"$"#,##0.0"T"' title="Combined assets"/>
 <BigValue data={kpis} value=median_roa fmt='#,##0.00"%"' title="Median ROA"/>
 <BigValue data={kpis} value=median_nim fmt='#,##0.00"%"' title="Median NIM"/>
@@ -85,10 +94,13 @@ lending, and total assets across all US commercial banks. It's the freshest publ
 read on the sector between quarterly filings.
 
 ```sql h8
-select obs_date, series_title, value_billions
+-- try_cast: with no local FRED key the extraction ships a single all-null row
+-- whose parquet types degrade; casting keeps this correct in both worlds
+select try_cast(obs_date as date) as obs_date, series_title,
+       try_cast(value_billions as double) as value_billions
 from fdic.fred_h8
-where obs_date >= '2024-01-01'
-order by obs_date
+where try_cast(obs_date as date) >= '2024-01-01'
+order by 1
 ```
 
 <LineChart data={h8} x=obs_date y=value_billions series=series_title yFmt='"$"#,##0"B"'/>

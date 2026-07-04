@@ -14,7 +14,27 @@ from fdic.build_meta
 <BigValue data={meta} value=freshest_quarter title="Freshest quarter"/>
 <BigValue data={meta} value=built_at title="Site built (UTC)"/>
 <BigValue data={meta} value=bank_quarters title="Bank-quarters" fmt='#,##0'/>
-<BigValue data={meta} value=banks title="Institutions"/>
+<BigValue data={meta} value=banks title="Institutions ever in scope"/>
+
+Two counts appear on this site and they are both right: the dashboard's headline
+number is banks reporting in the *latest quarter*, while the figure above counts
+every institution that has crossed the scope bar since 2019, including banks
+that later failed or merged. The second is larger by definition.
+
+## Status, derived at build time
+
+Every row below is computed from the warehouse or a build artifact when the site
+is built. Nothing on this table is typed in by hand.
+
+```sql status
+select "check", value, detail from fdic.quality_status
+```
+
+<DataTable data={status} rows=12>
+    <Column id=check title="Check"/>
+    <Column id=value title="Value"/>
+    <Column id=detail title="Detail"/>
+</DataTable>
 
 ## Pipeline
 

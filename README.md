@@ -81,7 +81,8 @@ uv run python -m scripts.run_backtest          # reproduce the 2023 backtest + p
 
 In CI the same steps run against MotherDuck (`DBT_TARGET=md`); pushes rebuild the
 site from the warehouse, and only the scheduled/manual refresh re-ingests from
-the FDIC API.
+the FDIC API. Pull requests run the full dbt build against a committed sample of
+real API rows, so they never need secrets or network access to the FDIC.
 
 Copy `.env.example` to `.env` and fill in your keys. Nothing secret is committed.
 
