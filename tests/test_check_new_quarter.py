@@ -35,7 +35,10 @@ def test_writes_github_output(monkeypatch, capsys, tmp_path):
     gh_out = tmp_path / "gh_output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(gh_out))
     _run(monkeypatch, capsys, "20240331", "20231231")
-    assert gh_out.read_text().strip() == "new_quarter=true"
+    written = gh_out.read_text()
+    assert "new_quarter=true" in written
+    # the detected quarter is exposed so the workflow can name it in the alert
+    assert "latest_quarter=20240331" in written
 
 
 def test_high_water_override_short_circuits_the_warehouse(monkeypatch):

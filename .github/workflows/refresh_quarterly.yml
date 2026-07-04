@@ -21,6 +21,7 @@ jobs:
       contents: read
     outputs:
       new_quarter: ${{ steps.check.outputs.new_quarter }}
+      latest_quarter: ${{ steps.check.outputs.latest_quarter }}
     env:
       MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
       FDIC_DB_PATH: "md:fdic_bank_health"
@@ -69,3 +70,21 @@ jobs:
       pages: write
       id-token: write
       contents: read
+
+  notify:
+    needs: [detect, deploy]
+    if: needs.detect.outputs.new_quarter == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      # a new quarter is a real event worth surfacing, not just a silent redeploy.
+      # a repo issue notifies the owner through GitHub with no external service.
+      - name: Open an issue announcing the new quarter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUARTER: ${{ needs.detect.outputs.latest_quarter }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "New FDIC quarter landed: ${QUARTER}" \
+            --body "The daily check found FDIC report date **${QUARTER}**. The pipeline re-ingested and redeployed the dashboard automatically — worth a look."

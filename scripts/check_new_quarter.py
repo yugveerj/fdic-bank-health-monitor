@@ -63,6 +63,8 @@ def main() -> int:
     if out:
         with open(out, "a") as f:
             f.write(line + "\n")
+            # expose the detected quarter so the workflow can name it in an alert
+            f.write(f"latest_quarter={published}\n")
     print(line)
     return 0
 
