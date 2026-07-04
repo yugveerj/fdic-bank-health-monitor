@@ -10,6 +10,12 @@ on:
   workflow_dispatch:
   workflow_call:
 
+# Pages allows one deployment at a time: unserialized concurrent runs fail each
+# other with "Deployment failed, try again later" (seen live, three times)
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
