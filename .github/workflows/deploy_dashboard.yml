@@ -67,6 +67,15 @@ jobs:
           mkdir -p dashboard/build/fdic-bank-health-monitor/dbt-docs
           cp dbt/target/static_index.html dashboard/build/fdic-bank-health-monitor/dbt-docs/index.html
 
+      - name: Strip the framework's vendor share tag
+        # @evidence_dev twitter:site is hardcoded in @evidence-dev/preprocess;
+        # removing it post-build is the only place that survives npm ci. The
+        # handle also lives in compiled JS (re-added on hydration), so both go.
+        run: |
+          find dashboard/build -name '*.html' -exec \
+            sed -i 's|<meta name="twitter:site" content="@evidence_dev" */*>||g' {} +
+          find dashboard/build -name '*.js' -exec sed -i 's|@evidence_dev||g' {} +
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
