@@ -19,7 +19,14 @@ from ingestion.db import connect
 log = logging.getLogger(__name__)
 
 EXPORT_PATH = Path(__file__).parent.parent / "dashboard" / "sources" / "fdic" / "fdic.duckdb"
-TABLES = ["dim_banks", "fct_bank_quarters", "mart_outlier_flags", "mart_peer_percentiles"]
+# export name -> relation in the warehouse (marts are tables, fred staging is a view)
+TABLES = {
+    "dim_banks": "dim_banks",
+    "fct_bank_quarters": "fct_bank_quarters",
+    "mart_outlier_flags": "mart_outlier_flags",
+    "mart_peer_percentiles": "mart_peer_percentiles",
+    "fred_h8": "stg_fred__h8",
+}
 
 
 def main() -> int:
@@ -31,10 +38,10 @@ def main() -> int:
     con = connect()
     try:
         con.execute(f"ATTACH '{EXPORT_PATH}' AS export")
-        for table in TABLES:
-            con.execute(f"CREATE TABLE export.{table} AS SELECT * FROM {table}")
-            n = con.execute(f"SELECT count(*) FROM export.{table}").fetchone()[0]
-            log.info("exported %s: %d rows", table, n)
+        for name, relation in TABLES.items():
+            con.execute(f"CREATE TABLE export.{name} AS SELECT * FROM {relation}")
+            n = con.execute(f"SELECT count(*) FROM export.{name}").fetchone()[0]
+            log.info("exported %s: %d rows", name, n)
         con.execute(
             """
             CREATE TABLE export.build_meta AS

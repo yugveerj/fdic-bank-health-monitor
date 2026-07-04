@@ -7,7 +7,7 @@ import logging
 
 from dotenv import load_dotenv
 
-from ingestion import fdic_failures, fdic_financials, fdic_institutions
+from ingestion import fdic_failures, fdic_financials, fdic_institutions, fred_h8
 from ingestion.client import FdicClient
 from ingestion.db import connect, row_count
 
@@ -23,6 +23,7 @@ def main() -> int:
         fdic_institutions.ingest(client, con)
         fdic_financials.ingest(client, con)
         fdic_failures.ingest(client, con)
+        fred_h8.ingest(con)
         for table in ("raw_fdic_institutions", "raw_fdic_financials", "raw_fdic_failures"):
             log.info("%s: %d total rows", table, row_count(con, table))
         freshest = con.execute("SELECT max(REPDTE) FROM raw_fdic_financials").fetchone()[0]

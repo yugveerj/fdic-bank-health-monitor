@@ -17,3 +17,6 @@ sources:
       - name: raw_fdic_failures
         description: One row per failure event since 1934
         freshness: null
+      - name: raw_fred_h8
+        description: Weekly FRED H.8 aggregates (series in docs/fred_h8_series.md)
+        freshness: null

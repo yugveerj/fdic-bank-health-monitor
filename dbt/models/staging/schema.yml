@@ -20,3 +20,11 @@ models:
     columns:
       - name: failure_id
         tests: [unique, not_null]
+
+  - name: stg_fred__h8
+    description: Weekly H.8 aggregates in billions; missing observations dropped.
+    columns:
+      - name: series_id
+        tests: [not_null]
+      - name: obs_date
+        tests: [not_null]

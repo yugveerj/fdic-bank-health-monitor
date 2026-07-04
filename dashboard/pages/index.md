@@ -72,8 +72,21 @@ group by report_date order by report_date
 
 <!-- TODO(revise): takeaway -->
 
-_Weekly industry aggregates (Federal Reserve H.8) join this page when the weekly
-feed ships._
+## The weekly pulse (Federal Reserve H.8)
+
+Between quarterly filings, these system-wide weekly aggregates are the freshest
+signal available — seasonally adjusted, in billions.
+
+```sql h8
+select obs_date, series_title, value_billions
+from fdic.fred_h8
+where obs_date >= '2024-01-01'
+order by obs_date
+```
+
+<LineChart data={h8} x=obs_date y=value_billions series=series_title yFmt='"$"#,##0"B"'/>
+
+<!-- TODO(revise): takeaway -->
 
 ---
 
