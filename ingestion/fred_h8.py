@@ -57,7 +57,6 @@ def _empty_frame() -> pd.DataFrame:
 
 
 def ingest(con) -> int:
-    """Fetch all four series into raw_fred_h8. Returns rows written."""
     if not os.environ.get("FRED_API_KEY"):
         con.register("_empty", _empty_frame())
         con.execute(f'CREATE TABLE IF NOT EXISTS "{TABLE}" AS SELECT * FROM _empty')

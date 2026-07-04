@@ -31,7 +31,7 @@ BACKTEST_DB = ROOT / "backtest.duckdb"
 PROD_DB = ROOT / "warehouse.duckdb"
 OUT_DIR = ROOT / "docs" / "backtest"
 
-# The 2023 label set (spec §6): three failures + one voluntary liquidation.
+# The 2023 label set: three failures + one voluntary liquidation.
 # Republic Bank (27332, failed 2024) is reported as an out-of-window check.
 LABELED = {24735: "failed", 57053: "failed", 59017: "failed", 27330: "liquidated"}
 OUT_OF_WINDOW = {27332: "failed_2024"}

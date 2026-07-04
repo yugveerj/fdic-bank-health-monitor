@@ -1,4 +1,3 @@
-"""Unit tests for ingestion logic that doesn't need the network."""
 
 import datetime as dt
 

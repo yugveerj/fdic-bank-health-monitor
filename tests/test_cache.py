@@ -1,4 +1,3 @@
-"""Raw cache round-trips and keys deterministically."""
 
 from ingestion import cache
 
