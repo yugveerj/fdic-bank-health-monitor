@@ -11,8 +11,16 @@ an Evidence dashboard published to GitHub Pages, refreshed on a schedule by CI.
 ## Problem statement
 
 <!-- TODO(revise) -->
-_Write-up coming once the first real data is flowing: what question this platform
-answers, and for whom._
+When Silicon Valley Bank failed in March 2023, the warning signs were sitting in
+public quarterly filings: a deposit base dominated by uninsured accounts, a
+balance sheet that had tripled in three years, a securities book carrying heavy
+duration into a rate-hiking cycle. None of it was secret — it just wasn't being
+*looked at* systematically. This project asks a narrow, testable question: if
+you compare every US bank over $1B to its size peers on a handful of public
+ratios, quarter after quarter, how visible were the 2023 banks nine months
+early — and what does a screen like that flag today? It's built for anyone who
+wants to explore that question honestly: the screen is peer-relative statistics,
+not predictions, and its limitations are documented as prominently as its hits.
 
 ## Architecture
 
@@ -41,9 +49,24 @@ the freeze is approximate. Full methodology: [docs/backtest_method.md](docs/back
 ## Limitations
 
 <!-- TODO(revise) -->
-_Honest limitations write-up comes with the backtest — including how metric selection
-relates to hindsight, and what the FDIC API's current-values serving means for
-point-in-time reconstruction._
+Four limitations govern how much the results can claim — the first two are the
+load-bearing honesty clauses, stated wherever results appear:
+
+1. **Hindsight in the metric selection.** I chose the six screen metrics knowing
+   how 2023 unfolded. The backtest demonstrates that a plausible screening
+   methodology would have ranked those banks as extreme outliers on mid-2022
+   data; it is not an out-of-sample discovery and claims no predictive validity.
+2. **The freeze is approximate.** The FDIC API serves current values, which may
+   include amendments filed after mid-2022. My as-of rebuild proves the *code*
+   uses only backward-looking data (989/989 composites identical to a physically
+   truncated rebuild), but a true point-in-time vintage would require archived
+   submissions I don't have.
+3. **Winsorization saturates zero-inflated metrics** — ~16% of brokered-share
+   observations share the +5 z-score boundary, flattening distinctions among the
+   most extreme banks (documented in "What the tests caught").
+4. **The 3-year growth metric excludes recent scope-entrants**, so roughly half
+   of composites rest on five metrics rather than six; `n_screen_metrics` makes
+   that visible everywhere.
 
 ## How to run
 
