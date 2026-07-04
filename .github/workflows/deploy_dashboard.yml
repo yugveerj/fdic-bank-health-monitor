@@ -75,6 +75,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # job-level on purpose: workflow-level concurrency is ignored when this
+    # workflow runs via workflow_call (the refresh workflows), so only this
+    # guard actually serializes ALL Pages deployments
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
