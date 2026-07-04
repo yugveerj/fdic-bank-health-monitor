@@ -66,7 +66,9 @@ which makes the freeze approximate rather than exact. Full methodology:
   business-model peer view now exists on the explorer as context; the composite
   stays on size bands on purpose, so the published backtest ranks never move.
 - The composite is an unweighted average. With three labels, fitting weights is
-  how you lie to yourself, so I didn't.
+  how you lie to yourself, so I didn't — and the outlier screen now shows the six
+  metrics are close to uncorrelated, so an unweighted average isn't quietly
+  double-counting one signal wearing two hats.
 - Uninsured-deposit figures are the banks' own reported estimates.
 
 ## How to run
@@ -118,3 +120,7 @@ One line per decision; full rationales in [docs/decisions.md](docs/decisions.md)
   publishes no moving major tag).
 - **2026-07-04** — Business-model peer groups ship as a context layer; the
   composite and backtest stay on size bands so published results never move.
+- **2026-07-04** — Bank profiles stay one searchable page rather than a URL per
+  bank. Per-bank pages (Evidence templated routes) would prerender ~15,000 files,
+  more than the GitHub Pages deploy can sync; real deep-links would need a host
+  built for that file count.

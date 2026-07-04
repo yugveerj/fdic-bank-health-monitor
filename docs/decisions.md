@@ -2,6 +2,23 @@
 
 Architecture-level decisions and their full rationales, newest first.
 
+- **2026-07-04** — Bank profiles stay one searchable page, not a URL per bank.
+  I tried Evidence templated pages (`/bank-profile/[cert]`, one per institution)
+  so the outlier and peer tables could deep-link to a bank's trends. The build
+  works, but each page prerenders its own query results, so 1,325 banks emit
+  ~15,000 files, and the GitHub Pages deploy fails to sync that many — it dies at
+  `syncing_files` every time, while the single-page build (~106 MB across ~270
+  files) deploys in a couple of minutes. So the Pages ceiling that actually bit
+  me is file count, not the ~100 MB total size I'd been watching. The profile
+  keeps a bank selector instead; genuine per-bank links would need a host built
+  for the file count (Cloudflare Pages, Netlify). A second finding fell out of
+  the same debugging: Pages allows exactly one Actions concurrency guard, on the
+  deploy job. A second guard — even under a different group name, on the build
+  job — fails every deploy at that same `syncing_files` step while Pages itself
+  is healthy, so the build job runs unserialized and the lone `pages-deploy`
+  guard stands. The rare build-vs-refresh warehouse race that a build guard would
+  have covered is self-healing on the next clean run.
+
 - **2026-07-04** — Business-model peer groups ship as a context layer, not a
   replacement. Three fixed, documented thresholds classify every bank-quarter
   (loans/assets < 0.20 is fee-and-custody, brokered share > 0.25 is
