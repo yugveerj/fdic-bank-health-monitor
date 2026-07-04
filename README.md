@@ -16,7 +16,7 @@ answers, and for whom._
 
 ## Architecture
 
-_Diagram coming with the automation work._
+![Architecture: FDIC and FRED APIs into cached Python ingestion, MotherDuck warehouse, dbt models, Evidence static build on GitHub Pages, all orchestrated by GitHub Actions](docs/architecture.png)
 
 ## Results
 

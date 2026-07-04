@@ -38,7 +38,7 @@ as they happen — including failure records with NULL certificate numbers from 
 1930s, insured filers that aren't chartered banks, open-bank assistance events
 mislabeled as failures, and a z-score saturation effect on zero-inflated metrics.
 
-_Architecture diagram lands here with the automation milestone._
+![Architecture](https://raw.githubusercontent.com/yugveerj/fdic-bank-health-monitor/main/docs/architecture.png)
 
 ---
 
