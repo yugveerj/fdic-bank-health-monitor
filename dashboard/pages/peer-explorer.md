@@ -57,10 +57,20 @@ select
 from ${selection}
 ```
 
+Highlight a bank to see exactly where it sits in this distribution:
+
+<Dropdown data={selection} name=highlight value=bank_name title="Highlight a bank"/>
+
+```sql highlight
+select bank_name, value from ${selection}
+where bank_name = '${inputs.highlight.value}' limit 1
+```
+
 <Histogram data={selection} x=value title="Distribution of {inputs.metric.label} — {inputs.band.value}, latest quarter">
     <ReferenceLine data={markers} x=p10 label="10th" lineType=dashed color=#94a3b8/>
     <ReferenceLine data={markers} x=p50 label="median" color=#2563eb/>
     <ReferenceLine data={markers} x=p90 label="90th" lineType=dashed color=#94a3b8/>
+    <ReferenceLine data={highlight} x=value label={inputs.highlight.value} color=#dc2626 lineWidth=2/>
 </Histogram>
 
 <DataTable data={markers}>
