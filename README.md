@@ -2,9 +2,10 @@
 
 ![CI](https://github.com/yugveerj/fdic-bank-health-monitor/actions/workflows/ci.yml/badge.svg)
 
-I'm building an automated analytics platform on FDIC public data that tracks the
-financial health of US banks: API ingestion → DuckDB/MotherDuck → dbt-tested models →
-an Evidence dashboard published to GitHub Pages, refreshed on a schedule by CI.
+This is a public dashboard that scores every US bank over $1B in assets against
+its size peers each quarter, then backtests the method against the banks that
+failed in 2023. Stack: FDIC API → Python → DuckDB/MotherDuck → dbt → Evidence,
+published on GitHub Pages and refreshed by CI with no manual steps.
 
 **Live dashboard:** <https://yugveerj.github.io/fdic-bank-health-monitor/>
 
@@ -30,11 +31,12 @@ that.
 ## Results
 
 Where the banks at the center of the 2023 banking stress ranked on my composite
-screen, frozen at 2022-06-30 — nine months before the first failure. Reproduce
-everything with `uv run python -m scripts.run_backtest` (it also *proves* the
-freeze: a physically truncated rebuild must match the production mart exactly).
+screen, frozen at 2022-06-30. That is nine months before the first failure.
+Reproduce everything with `uv run python -m scripts.run_backtest` (it also
+*proves* the freeze: a physically truncated rebuild must match the production
+mart exactly).
 
-| Bank | Band | Rank in band | Band pctile | Overall (n=989) |
+| Bank | Band | Rank in band | Band pctile | Overall rank (of 989) |
 |---|---|---|---|---|
 | Silvergate Bank (liquidated Mar 2023) | $10B–$100B | 2 / 128 | 99.2 | 8 |
 | Silicon Valley Bank (failed Mar 2023) | >$100B | 1 / 35 | 100.0 | 26 |
@@ -44,8 +46,9 @@ freeze: a physically truncated rebuild must match the production mart exactly).
 
 Two honesty notes govern this table: the metrics were chosen with knowledge of
 the 2023 events (a methodology demonstration, not an out-of-sample discovery),
-and the FDIC API serves current values that may include post-2022 amendments —
-the freeze is approximate. Full methodology: [docs/backtest_method.md](docs/backtest_method.md).
+and the FDIC API serves current values that may include post-2022 amendments,
+which makes the freeze approximate rather than exact. Full methodology:
+[docs/backtest_method.md](docs/backtest_method.md).
 
 ## Limitations
 
@@ -80,55 +83,34 @@ In CI the same steps run against MotherDuck (`DBT_TARGET=md`); pushes rebuild th
 site from the warehouse, and only the scheduled/manual refresh re-ingests from
 the FDIC API.
 
-Copy `.env.example` to `.env` and fill in your keys — nothing secret is committed.
+Copy `.env.example` to `.env` and fill in your keys. Nothing secret is committed.
 
 ## What the tests caught
 
 Two findings I'm keeping visible because they're the best argument for testing
 data, not just code.
 
-The FDIC's failures endpoint includes more than failures. It also carries
-open-bank assistance records, which meant my first pass at a failure label briefly
-marked Citibank and Bank of America as failed banks. The fix requires an actual
-FAILURE resolution type, and a test now enforces it. Government data has semantics,
-and the semantics are not always what the endpoint name says.
+The FDIC's failures endpoint includes more than failures: it also carries
+open-bank assistance records, which briefly marked Citibank and Bank of America
+as failed banks in my first pass. The fix requires an actual FAILURE resolution
+type, and a test now enforces it. Government data has semantics, and the
+semantics are not always what the endpoint name says.
 
-Winsorization saturates on zero-inflated ratios. Most smaller banks report zero
-brokered deposits, which collapses the MAD and makes any nonzero bank's z-score
-explode. The clamp at plus or minus five catches this, but 16% of brokered-share
-rows sit exactly at the cap, which quietly erases differences between the banks
-you most want to compare. The composite keeps the clamped score for stability, the
-drill-down keeps an unclamped column for resolution, and the limitation is written
-down instead of discovered later.
+Winsorization saturates on zero-inflated ratios: most smaller banks report zero
+brokered deposits, which collapses the MAD and pins 16% of brokered-share
+z-scores exactly at the +5 cap. That quietly erases differences between the
+banks you most want to compare. The composite keeps the clamped score for
+stability, the drill-down keeps an unclamped column for resolution, and the
+limitation is written down instead of discovered later.
 
-The full running log — including NULL certificate numbers on Depression-era
-failure records and insured filers that aren't chartered banks — lives on the
-dashboard's data-quality page and in the dbt model docs.
+[Full data-quality log](docs/data_quality_log.md).
 
 ## Decisions
 
-Why I made the architecture calls I made, newest first.
+One line per decision; full rationales in [docs/decisions.md](docs/decisions.md).
 
-- **2026-07-03 — Hosting: Evidence static build on GitHub Pages.** I originally
-  planned on Evidence Cloud's free tier, but it was discontinued — the managed
-  product is now Evidence Studio at $15/user/mo, and it drops support for
-  local-DuckDB sources. Open-source Evidence is unchanged and officially documents
-  GitHub Pages as a deploy target, so my Actions workflows rebuild the static site
-  on every refresh, and MotherDuck stays the warehouse the build reads at CI time.
-  Before committing to this I verified interactivity survives a static build: a
-  dropdown driving a parameterized query re-filters a table on the statically-served
-  production bundle, with queries running client-side via DuckDB-WASM (verified with
-  a scratch page before the real pages replaced it). The build is ~87 MB — only ~428 KB of it
-  is query-result data, the rest is app JS including DuckDB-WASM — comfortably within
-  GitHub Pages limits.
-
-- **2026-07-03 — Python pinned to 3.13, not 3.14.** dbt-core doesn't support 3.14
-  yet (its mashumaro/pydantic-v1 dependencies block it until dbt v2.0), and 3.13 is
-  the newest version that dbt-core, dbt-duckdb, duckdb, and pandas all support today.
-  uv downloads and pins the interpreter, so the repo doesn't depend on whatever
-  Python the machine happens to have.
-
-- **2026-07-03 — Third-party GitHub Actions pinned by commit SHA.** My first CI run
-  failed because `astral-sh/setup-uv` publishes no moving `v8` major tag. The fix is
-  also the safer practice: pin the exact commit SHA (with the version as a comment) —
-  a SHA can't be silently retargeted the way a tag can.
+- **2026-07-03** — Hosting: open-source Evidence, static build on GitHub Pages
+  (Evidence Cloud's free tier was discontinued).
+- **2026-07-03** — Python pinned to 3.13 (dbt-core blocks 3.14 until dbt v2.0).
+- **2026-07-03** — Third-party GitHub Actions pinned by commit SHA (setup-uv
+  publishes no moving major tag).
