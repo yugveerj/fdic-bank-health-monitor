@@ -67,6 +67,45 @@ Composites resting on fewer than six metrics (see the Metrics column) carry more
 noise; the three-year growth metric in particular requires twelve quarters of
 in-scope history.
 
+## Biggest moves since last quarter
+
+A high composite is worth a look; a composite that *climbed* sharply in one
+quarter is worth a look sooner. These are the banks in this band whose score rose
+most between the last two quarters — a change in the funding, growth, or
+balance-sheet mix the screen watches, not a verdict.
+
+```sql movers
+with q as (
+    select distinct report_date from fdic.mart_outlier_flags order by 1 desc limit 2
+),
+latest as (select max(report_date) as d from q),
+prior  as (select min(report_date) as d from q)
+select
+    '/bank-profile/' || cast(o.cert as integer) as profile_url,
+    b.bank_name,
+    p.composite_score as prior_composite,
+    o.composite_score as composite,
+    o.composite_score - p.composite_score as change
+from fdic.mart_outlier_flags o
+join fdic.dim_banks b using (cert)
+join fdic.mart_outlier_flags p
+      on p.cert = o.cert and p.report_date = (select d from prior)
+where o.report_date = (select d from latest)
+  and o.peer_band = '${inputs.band.value}'
+  and b.is_active
+  and o.composite_score is not null
+  and p.composite_score is not null
+order by change desc
+limit 12
+```
+
+<DataTable data={movers} rows=12>
+    <Column id=profile_url contentType=link linkLabel=bank_name title="Bank"/>
+    <Column id=prior_composite title="Prior" fmt='#,##0.00'/>
+    <Column id=composite title="Now" fmt='#,##0.00'/>
+    <Column id=change title="Change" fmt='+#,##0.00;-#,##0.00' contentType=delta/>
+</DataTable>
+
 ## How an analyst would use this
 
 1. Pick your size band and sort by composite. The shortlist is the top handful,
@@ -78,6 +117,46 @@ in-scope history.
    strange quarter are three different conversations.
 4. Take what survives to primary sources: the call report, the filings, the
    footnotes. The screen's job ends where the reading begins.
+
+## How the six metrics relate
+
+The composite is an unweighted average of six risk-signed z-scores. That only
+reads cleanly if the six aren't secretly saying the same thing. Below is how
+correlated they are across every scored bank-quarter — values near zero mean the
+metrics carry independent information; a high value would mean two of them
+double-count. This is shown for honesty, not tuning: the composite stays
+unweighted regardless of what it says.
+
+```sql metric_corr
+with z as (
+    unpivot (
+        select cert, report_date,
+            z_uninsured_share, z_brokered_share, z_securities_share,
+            z_asset_growth_3y, z_nim_trend, z_equity_ratio
+        from fdic.mart_outlier_flags where composite_score is not null
+    ) on z_uninsured_share, z_brokered_share, z_securities_share,
+         z_asset_growth_3y, z_nim_trend, z_equity_ratio
+    into name metric value z
+),
+labeled as (
+    select cert, report_date, z,
+        case metric
+            when 'z_uninsured_share'  then 'Uninsured'
+            when 'z_brokered_share'   then 'Brokered'
+            when 'z_securities_share' then 'Securities'
+            when 'z_asset_growth_3y'  then '3y growth'
+            when 'z_nim_trend'        then 'NIM trend'
+            when 'z_equity_ratio'     then 'Equity'
+        end as metric
+    from z
+)
+select a.metric as metric_a, b.metric as metric_b, round(corr(a.z, b.z), 2) as correlation
+from labeled a
+join labeled b on a.cert = b.cert and a.report_date = b.report_date
+group by a.metric, b.metric
+```
+
+<Heatmap data={metric_corr} x=metric_a y=metric_b value=correlation valueFmt='#,##0.00' title="Correlation between the six screen metrics"/>
 
 ---
 
