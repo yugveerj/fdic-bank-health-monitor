@@ -15,6 +15,12 @@ banks that failed in 2023? Mostly, yes. One important miss. The case study cover
 Everything updates itself. Weekly aggregates from the Federal Reserve, quarterly
 filings from the FDIC, no hands on the wheel.
 
+```sql build
+select freshest_quarter, built_at, bank_quarters from fdic.build_meta
+```
+
+<small>Data through <Value data={build} column=freshest_quarter fmt='mmm yyyy'/> · <Value data={build} column=bank_quarters fmt='#,##0'/> bank-quarters · site rebuilt <Value data={build} column=built_at fmt='mmm d, yyyy'/></small>
+
 ## What the screen found
 
 Frozen at June 2022, nine months before the first failure, the screen ranked

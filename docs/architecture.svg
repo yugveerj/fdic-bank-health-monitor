@@ -57,7 +57,7 @@
 
   <rect class="box" x="30" y="260" width="920" height="170" rx="10"/>
   <text x="50" y="290" class="title">GitHub Actions</text>
-  <text x="50" y="316" class="sub">• CI on every push and pull request — ruff, pytest, then dbt build against the warehouse</text>
+  <text x="50" y="316" class="sub">• CI on every push and pull request — ruff, pytest, then a full dbt build on a committed data sample</text>
   <text x="50" y="338" class="sub">• Push to main — rebuild models, docs, and dashboard FROM the warehouse (no source-API calls) and deploy</text>
   <text x="50" y="360" class="sub">• Saturday cron — ingest the week's FRED H.8 observations, then rebuild and deploy</text>
   <text x="50" y="382" class="sub">• Daily cron — compare the FDIC API's latest quarter to the warehouse high-water mark; on a new quarter,</text>

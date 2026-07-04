@@ -23,7 +23,13 @@ order by f.report_date
 
 ```sql profile_header
 select bank_name, max(report_date) as latest, count(*) as quarters,
-       max_by(business_model, report_date) as business_model
+       case max_by(business_model, report_date)
+           when 'traditional_lender' then 'Traditional lender'
+           when 'wholesale_funded'   then 'Wholesale-funded'
+           when 'securities_focused' then 'Securities-focused'
+           when 'fee_custody'        then 'Fee & custody'
+           else max_by(business_model, report_date)
+       end as business_model
 from ${bank_history} group by bank_name
 ```
 
@@ -47,41 +53,53 @@ from ${bank_history} order by report_date
 ## Profitability
 
 ```sql profitability
-select report_date, roa_pct, roe_pct, net_interest_margin_pct, efficiency_ratio_pct
+select report_date,
+       roa_pct                 as "Return on assets (%)",
+       net_interest_margin_pct as "Net interest margin (%)",
+       efficiency_ratio_pct    as "Efficiency ratio (%)"
 from ${bank_history} order by report_date
 ```
 
-<LineChart data={profitability} x=report_date y={["roa_pct", "net_interest_margin_pct"]} yFmt='#,##0.00"%"' title="ROA and NIM"/>
-<LineChart data={profitability} x=report_date y=efficiency_ratio_pct yFmt='#,##0"%"' title="Efficiency ratio"/>
+<LineChart data={profitability} x=report_date y={["Return on assets (%)", "Net interest margin (%)"]} yFmt='#,##0.00"%"' title="ROA and NIM"/>
+<LineChart data={profitability} x=report_date y="Efficiency ratio (%)" yFmt='#,##0"%"' title="Efficiency ratio"/>
 
 ## Capital
 
 ```sql capital
-select report_date, equity_to_assets, cet1_ratio_pct / 100 as cet1_ratio, leverage_ratio_pct / 100 as leverage_ratio
+select report_date,
+       equity_to_assets     as "Equity / assets",
+       cet1_ratio_pct / 100 as "CET1 ratio",
+       leverage_ratio_pct / 100 as "Leverage ratio"
 from ${bank_history} order by report_date
 ```
 
-<LineChart data={capital} x=report_date y={["equity_to_assets", "cet1_ratio", "leverage_ratio"]} yFmt=pct1/>
+<LineChart data={capital} x=report_date y={["Equity / assets", "CET1 ratio", "Leverage ratio"]} yFmt=pct1/>
 
 ## Funding mix
 
 ```sql funding
-select report_date, uninsured_deposit_share, brokered_deposit_share, loans_to_deposits
+select report_date,
+       uninsured_deposit_share as "Uninsured share",
+       brokered_deposit_share  as "Brokered share",
+       loans_to_deposits       as "Loans / deposits"
 from ${bank_history} order by report_date
 ```
 
-<LineChart data={funding} x=report_date y={["uninsured_deposit_share", "brokered_deposit_share"]} yFmt=pct1 title="Deposit composition"/>
-<LineChart data={funding} x=report_date y=loans_to_deposits yFmt=pct0 title="Loans / deposits"/>
+<LineChart data={funding} x=report_date y={["Uninsured share", "Brokered share"]} yFmt=pct1 title="Deposit composition"/>
+<LineChart data={funding} x=report_date y="Loans / deposits" yFmt=pct0 title="Loans / deposits"/>
 
 ## Asset quality and growth
 
 ```sql quality
-select report_date, noncurrent_loans_ratio_pct, net_chargeoffs_ratio_pct, asset_growth_yoy
+select report_date,
+       noncurrent_loans_ratio_pct as "Noncurrent loans (%)",
+       net_chargeoffs_ratio_pct   as "Net charge-offs (%)",
+       asset_growth_yoy           as "Asset growth (YoY)"
 from ${bank_history} order by report_date
 ```
 
-<LineChart data={quality} x=report_date y={["noncurrent_loans_ratio_pct", "net_chargeoffs_ratio_pct"]} yFmt='#,##0.00"%"' title="Noncurrent loans and net charge-offs"/>
-<LineChart data={quality} x=report_date y=asset_growth_yoy yFmt=pct0 title="Asset growth, year over year"/>
+<LineChart data={quality} x=report_date y={["Noncurrent loans (%)", "Net charge-offs (%)"]} yFmt='#,##0.00"%"' title="Noncurrent loans and net charge-offs"/>
+<LineChart data={quality} x=report_date y="Asset growth (YoY)" yFmt=pct0 title="Asset growth, year over year"/>
 
 ---
 

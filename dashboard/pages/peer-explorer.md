@@ -15,11 +15,29 @@ select distinct peer_band from fdic.mart_peer_percentiles order by peer_band
 ```
 
 ```sql metrics
-select distinct metric from fdic.mart_peer_percentiles order by metric
+select distinct metric,
+    case metric
+        when 'uninsured_deposit_share'    then 'Uninsured deposit share'
+        when 'brokered_deposit_share'     then 'Brokered deposit share'
+        when 'securities_to_assets'       then 'Securities / assets'
+        when 'asset_growth_3y_cagr'       then 'Asset growth (3-yr CAGR)'
+        when 'asset_growth_yoy'           then 'Asset growth (YoY)'
+        when 'deposit_growth_yoy'         then 'Deposit growth (YoY)'
+        when 'nim_trend_4q'               then 'NIM trend (4-qtr slope)'
+        when 'equity_to_assets'           then 'Equity / assets'
+        when 'loans_to_deposits'          then 'Loans / deposits'
+        when 'roa_pct'                    then 'Return on assets (%)'
+        when 'noncurrent_loans_ratio_pct' then 'Noncurrent loans (%)'
+        when 'net_chargeoffs_ratio_pct'   then 'Net charge-offs (%)'
+        when 'cost_of_funds_pct'          then 'Cost of funds (%)'
+        when 'efficiency_ratio_pct'       then 'Efficiency ratio (%)'
+        else metric
+    end as metric_label
+from fdic.mart_peer_percentiles order by metric_label
 ```
 
 <Dropdown data={bands} name=band value=peer_band title="Peer band" defaultValue="$1B-$10B"/>
-<Dropdown data={metrics} name=metric value=metric title="Metric" defaultValue="roa_pct"/>
+<Dropdown data={metrics} name=metric value=metric label=metric_label title="Metric" defaultValue="roa_pct"/>
 
 ```sql selection
 select p.cert, b.bank_name, p.value, p.robust_z
@@ -39,7 +57,11 @@ select
 from ${selection}
 ```
 
-<Histogram data={selection} x=value title="Distribution of {inputs.metric.value} — {inputs.band.value}, latest quarter"/>
+<Histogram data={selection} x=value title="Distribution of {inputs.metric.label} — {inputs.band.value}, latest quarter">
+    <ReferenceLine data={markers} x=p10 label="10th" lineType=dashed color=#94a3b8/>
+    <ReferenceLine data={markers} x=p50 label="median" color=#2563eb/>
+    <ReferenceLine data={markers} x=p90 label="90th" lineType=dashed color=#94a3b8/>
+</Histogram>
 
 <DataTable data={markers}>
     <Column id=p10 title="10th percentile"/>
@@ -79,10 +101,18 @@ fee-and-custody banks. The outlier screen's composite stays on size bands; this
 view is context.
 
 ```sql models
-select distinct business_model from fdic.mart_model_percentiles order by business_model
+select distinct business_model,
+    case business_model
+        when 'traditional_lender' then 'Traditional lender'
+        when 'wholesale_funded'   then 'Wholesale-funded'
+        when 'securities_focused' then 'Securities-focused'
+        when 'fee_custody'        then 'Fee & custody'
+        else business_model
+    end as business_model_label
+from fdic.mart_model_percentiles order by business_model_label
 ```
 
-<Dropdown data={models} name=model value=business_model title="Business model" defaultValue="traditional_lender"/>
+<Dropdown data={models} name=model value=business_model label=business_model_label title="Business model" defaultValue="traditional_lender"/>
 
 ```sql model_selection
 select p.cert, b.bank_name, p.value, p.robust_z
@@ -101,7 +131,7 @@ where metric = '${inputs.metric.value}'
 
 {#if (model_metric_available[0]?.n ?? 0) > 0}
 
-<Histogram data={model_selection} x=value title="Distribution of {inputs.metric.value} within {inputs.model.value}"/>
+<Histogram data={model_selection} x=value title="Distribution of {inputs.metric.label} within {inputs.model.label}"/>
 
 {:else}
 
