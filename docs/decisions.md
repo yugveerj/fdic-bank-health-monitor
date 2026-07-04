@@ -26,3 +26,5 @@ Architecture-level decisions and their full rationales, newest first.
   run failed because `astral-sh/setup-uv` publishes no moving `v8` major tag.
   The fix is also the safer practice: pin the exact commit SHA with the version
   as a comment. A SHA can't be silently retargeted the way a tag can.
+  GitHub-owned actions (checkout, setup-node, the Pages upload and deploy pair)
+  ride their major tags; the SHA discipline is for third parties.

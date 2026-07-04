@@ -17,6 +17,7 @@ What it does, in order:
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -27,9 +28,10 @@ log = logging.getLogger(__name__)
 
 AS_OF = "2022-06-30"
 ROOT = Path(__file__).parent.parent
-BACKTEST_DB = ROOT / "backtest.duckdb"
-PROD_DB = ROOT / "warehouse.duckdb"
-OUT_DIR = ROOT / "docs" / "backtest"
+# both paths are env-overridable so CI can run the whole thing on the fixture
+BACKTEST_DB = Path(os.environ.get("BACKTEST_DB_PATH", ROOT / "backtest.duckdb")).resolve()
+PROD_DB = Path(os.environ.get("FDIC_PROD_DB", ROOT / "warehouse.duckdb")).resolve()
+OUT_DIR = Path(os.environ.get("BACKTEST_OUT_DIR", ROOT / "docs" / "backtest")).resolve()
 
 # The 2023 label set: three failures + one voluntary liquidation.
 # Republic Bank (27332, failed 2024) is reported as an out-of-window check.
@@ -42,13 +44,23 @@ def build_frozen_warehouse() -> None:
     con = duckdb.connect(str(BACKTEST_DB))
     try:
         con.execute(f"ATTACH '{PROD_DB}' AS prod (READ_ONLY)")
-        con.execute(
-            f"""CREATE TABLE raw_fdic_financials AS
-                SELECT * FROM prod.raw_fdic_financials
-                WHERE strptime(REPDTE, '%Y%m%d')::date <= DATE '{AS_OF}'"""
-        )
-        con.execute("CREATE TABLE raw_fdic_institutions AS SELECT * FROM prod.raw_fdic_institutions")
-        con.execute("CREATE TABLE raw_fdic_failures AS SELECT * FROM prod.raw_fdic_failures")
+        # copy every raw table generically so a new source can never silently
+        # break the frozen build again; time-bounded ones get truncated at as-of
+        raw_tables = [r[0] for r in con.execute(
+            "SELECT table_name FROM duckdb_tables() WHERE database_name='prod' AND table_name LIKE 'raw_%'"
+        ).fetchall()]
+        for table in raw_tables:
+            if table == "raw_fdic_financials":
+                con.execute(
+                    f"""CREATE TABLE {table} AS SELECT * FROM prod.{table}
+                        WHERE strptime(REPDTE, '%Y%m%d')::date <= DATE '{AS_OF}'"""
+                )
+            elif table == "raw_fred_h8":
+                con.execute(
+                    f"CREATE TABLE {table} AS SELECT * FROM prod.{table} WHERE obs_date <= '{AS_OF}'"
+                )
+            else:
+                con.execute(f"CREATE TABLE {table} AS SELECT * FROM prod.{table}")
         n = con.execute("SELECT count(*), max(REPDTE) FROM raw_fdic_financials").fetchone()
         log.info("frozen raw financials: %d rows, max REPDTE %s", n[0], n[1])
     finally:

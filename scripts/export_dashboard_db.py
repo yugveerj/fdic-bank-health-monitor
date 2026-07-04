@@ -58,9 +58,14 @@ def _export_quality_status(con) -> None:
         """
     ).fetchone()
     rows.append(("Latest FDIC quarter", str(latest), "quarterly data lands ~60 days after quarter-end"))
+    n_active = con.execute(
+        """SELECT count(*) FROM fct_bank_quarters f JOIN dim_banks d USING (cert)
+           WHERE f.report_date = (SELECT max(report_date) FROM fct_bank_quarters)
+             AND d.is_active"""
+    ).fetchone()[0]
     rows.append((
         "Banks reporting, latest quarter",
-        f"{n_latest:,}",
+        f"{n_latest:,} ({n_active:,} active)",
         f"prior quarter ({prior}): {n_prior:,}",
     ))
 

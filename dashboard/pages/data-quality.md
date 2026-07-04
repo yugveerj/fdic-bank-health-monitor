@@ -16,10 +16,12 @@ from fdic.build_meta
 <BigValue data={meta} value=bank_quarters title="Bank-quarters" fmt='#,##0'/>
 <BigValue data={meta} value=banks title="Institutions ever in scope"/>
 
-Two counts appear on this site and they are both right: the dashboard's headline
-number is banks reporting in the *latest quarter*, while the figure above counts
+Three counts appear on this site and all of them are right. The homepage
+headline is *active* banks reporting in the latest quarter. The status table
+below also shows *all* latest-quarter reporters, which adds a handful of
+institutions that filed and then closed. The figure above is the widest net:
 every institution that has crossed the scope bar since 2019, including banks
-that later failed or merged. The second is larger by definition.
+that later failed or merged. Each page states which population it shows.
 
 ## Status, derived at build time
 

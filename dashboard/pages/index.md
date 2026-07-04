@@ -31,16 +31,18 @@ select max(report_date) as latest_quarter from fdic.fct_bank_quarters
 ```sql kpis
 select
     count(*)                                as banks_reporting,
+    count(*) filter (b.is_active)           as active_reporting,
     sum(total_assets) / 1e9                 as sector_assets_t,
     sum(total_deposits) / 1e9               as sector_deposits_t,
-    median(roa_pct)                         as median_roa,
-    median(net_interest_margin_pct)         as median_nim,
-    median(equity_to_assets)                as median_equity_ratio
-from fdic.fct_bank_quarters
+    median(roa_pct)               filter (b.is_active) as median_roa,
+    median(net_interest_margin_pct) filter (b.is_active) as median_nim,
+    median(equity_to_assets)       filter (b.is_active) as median_equity_ratio
+from fdic.fct_bank_quarters f
+join fdic.dim_banks b using (cert)
 where report_date = (select latest_quarter from ${latest})
 ```
 
-<BigValue data={kpis} value=banks_reporting title="Banks reporting (latest quarter)"/>
+<BigValue data={kpis} value=active_reporting title="Active banks reporting (latest quarter)"/>
 <BigValue data={kpis} value=sector_assets_t fmt='"$"#,##0.0"T"' title="Combined assets"/>
 <BigValue data={kpis} value=median_roa fmt='#,##0.00"%"' title="Median ROA"/>
 <BigValue data={kpis} value=median_nim fmt='#,##0.00"%"' title="Median NIM"/>

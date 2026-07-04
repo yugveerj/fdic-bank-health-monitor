@@ -11,7 +11,7 @@ from fdic.dim_banks
 order by bank_name
 ```
 
-<Dropdown data={banks} name=bank value=cert label=label title="Institution" defaultValue={628}/>
+<Dropdown data={banks} name=bank value=cert label=label title="Institution (closed banks included)" defaultValue={628}/>
 
 ```sql bank_history
 select f.*, b.bank_name
@@ -81,3 +81,6 @@ from ${bank_history} order by report_date
 <LineChart data={quality} x=report_date y={["noncurrent_loans_ratio_pct", "net_chargeoffs_ratio_pct"]} yFmt='#,##0.00"%"' title="Noncurrent loans and net charge-offs"/>
 <LineChart data={quality} x=report_date y=asset_growth_yoy yFmt=pct0 title="Asset growth, year over year"/>
 
+---
+
+Filings as reported to the FDIC; nothing here judges any institution.

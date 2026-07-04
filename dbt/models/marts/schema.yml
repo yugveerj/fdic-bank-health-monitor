@@ -5,7 +5,7 @@ models:
     description: One row per institution in the financials scope, with failure attributes.
     columns:
       - name: cert
-        description: FDIC certificate number — the bank's stable identifier.
+        description: FDIC certificate number.
         tests: [unique, not_null]
       - name: bank_name
         description: Legal name.
@@ -54,8 +54,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('dim_banks')
-              field: cert
+              arguments:
+                to: ref('dim_banks')
+                field: cert
       - name: report_date
         description: Quarter-end report date.
         tests: [not_null]

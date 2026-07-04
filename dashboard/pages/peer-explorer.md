@@ -28,6 +28,7 @@ join fdic.dim_banks b using (cert)
 where p.report_date = (select latest_quarter from ${latest})
   and p.peer_band = '${inputs.band.value}'
   and p.metric = '${inputs.metric.value}'
+  and b.is_active
 ```
 
 ```sql markers

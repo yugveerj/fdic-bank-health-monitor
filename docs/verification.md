@@ -1,7 +1,8 @@
 # Data verification
 
 How I convinced myself the ingested data is the same data the FDIC publishes.
-Last full check: 2026-07-03, against the freshest quarter then available (2025-Q4).
+Last full check: 2026-07-03; the warehouse is current through 2026-Q1
+(2026-03-31), and the three-bank table below uses 2025-Q4 values.
 
 ## Three-bank cross-check (total assets, total deposits, ROA)
 
