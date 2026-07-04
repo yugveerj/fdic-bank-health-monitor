@@ -31,6 +31,21 @@ from ${bank_history} group by bank_name
 Twenty-nine quarters at most, grouped into five metric families. The story of a
 bank is usually in the trend, not the level.
 
+## Screen history
+
+```sql screen_history
+select report_date, composite_score, n_screen_metrics
+from fdic.mart_outlier_flags
+where cert = ${params.cert}
+order by report_date
+```
+
+<LineChart data={screen_history} x=report_date y=composite_score yFmt='#,##0.00' title="Composite score vs peers, by quarter"/>
+
+Positive means the bank sat further from its size peers in the direction the
+screen watches, scored within whichever size band it belonged to that quarter. A
+blank stretch is a quarter with too few of the six metrics to score.
+
 ## Balance sheet
 
 ```sql balance
