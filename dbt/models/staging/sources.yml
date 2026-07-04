@@ -19,4 +19,9 @@ sources:
         freshness: null
       - name: raw_fred_h8
         description: Weekly FRED H.8 aggregates (series in docs/fred_h8_series.md)
-        freshness: null
+        # H.8 publishes Fridays; a feed more than three weeks stale means the
+        # weekly ingest quietly stopped landing observations.
+        loaded_at_field: "obs_date::timestamp"
+        freshness:
+          warn_after: {count: 10, period: day}
+          error_after: {count: 21, period: day}
