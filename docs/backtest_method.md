@@ -8,10 +8,10 @@ center of the 2023 banking stress? That's nine months before the first of them
 failed. This document explains how the test works, where every number comes
 from, and what the result does and does not mean. The short version of that
 last part: the metrics were chosen knowing how 2023 ended, so this demonstrates
-a screening method on history rather than discovering anything, and the
-limitations section below is load-bearing.
+a screening method on history rather than discovering anything. The
+limitations section expands on what that means for reading the results.
 
-## The freeze, and how it's proven rather than promised
+## Reproducing the June 2022 snapshot
 
 Everything reproduces from a single command:
 
@@ -20,17 +20,18 @@ Everything reproduces from a single command:
 The command rebuilds the entire model pipeline in a separate database whose raw
 financials are physically truncated at the as-of date. As a second layer, the
 staging model takes an `as_of` variable that filters in-model, so even if the
-copy step regressed the models would still exclude later data. The script then
-asserts two things. First, that the frozen build's composite scores are
-identical to the production mart's rows at that date, all 989 banks. This
-matters because every screen metric is built from trailing windows; if any of
-them leaked future data, the physically truncated rebuild could not match a
-mart computed over the full panel. The equivalence turns "the screen only looks
-backward" from a claim into a checked property. Second, the script asserts
-that the labeled banks land at their published ranks, which guards against a
-subtler failure where both sides of the equivalence drift together. A
-fixture-scale version of the whole thing runs on every pull request, with its
-own pinned rank.
+copy step regressed the models would still exclude later data.
+
+The script then asserts that the frozen build's composite scores are identical
+to the production mart's rows at that date, all 989 banks. Every screen metric
+is built from trailing windows, so a mismatch here would indicate that one or
+more of those window calculations depended on observations after the as-of
+date. Matching exactly is the leakage check.
+
+Two further assertions run after the equivalence. The script pins the labeled
+banks to their published ranks, which guards against a subtler failure where
+both sides of the equivalence drift together. And a fixture-scale version of
+the whole rebuild runs on every pull request, with its own pinned rank.
 
 ## Where the data comes from
 
@@ -73,11 +74,11 @@ direction: a plus means a higher value scores as riskier.
 | Metric | Direction | Why |
 |---|---|---|
 | Uninsured-deposit share | + | Deposits above the insurance limit are the ones that can leave in an afternoon, so a funding base dominated by them is structurally runnable. |
-| Brokered-deposit share | + | Brokered money is rate-shopping money. It arrives for yield and leaves for yield, with no relationship holding it in place. |
-| Securities / assets | + | In a rising-rate environment a large securities book is embedded duration: unrealized losses that turn real exactly when deposits need paying out. The "aren't securities the safe assets?" answer is not when rates just rose and you must sell them. |
+| Brokered-deposit share | + | Brokered deposits arrive for yield and leave for yield, with no customer relationship holding them in place. |
+| Securities / assets | + | In a rising-rate environment a large securities book is embedded duration: unrealized losses that turn real exactly when deposits need paying out. |
 | 3-yr asset growth | + | A balance sheet that tripled in three years has risk controls, funding relationships, and asset quality that were built for a much smaller bank. |
 | NIM 4-quarter trend | − | A margin deteriorating quarter after quarter means the bank is being squeezed between its asset yields and its funding costs. |
-| Equity / assets | − | Capital is the distance between a bad quarter and insolvency. Less of it means less room for anything to go wrong. |
+| Equity / assets | − | Less capital means less room to absorb losses before a bad quarter threatens solvency. |
 
 Each metric is turned into a robust z-score within the bank's size band for
 that quarter: the value minus the band median, divided by 1.4826 times the
@@ -90,8 +91,8 @@ assets, recomputed each quarter.
 
 The composite is the unweighted mean of whichever risk-signed z-scores are
 available for that bank-quarter, with a companion column recording how many of
-the six fed it. Unweighted is a deliberate choice: with three or four labeled
-events there is nothing to fit weights against honestly. The specification
+the six fed it. Unweighted is a deliberate choice: three or four labeled
+events are too few to estimate or validate metric weights. The specification
 allowed considering an unrealized-loss field as a seventh metric; I didn't
 pursue it, because the set was frozen before results were examined and it
 stays frozen.
@@ -125,19 +126,17 @@ With only three or four labeled events, these are presented as ranks and
 distribution positions. Capture rates and lift statistics would be meaningless
 at this sample size, so they are deliberately absent.
 
-First Republic is the miss, and the reason is instructive rather than
-embarrassing. The screen's rate-risk proxy is securities as a share of assets,
-which is the Silicon Valley Bank profile. First Republic parked its rate risk
-where these six metrics barely look: long fixed-rate jumbo mortgages, funded
-by wealthy clients whose balances sat far above the insurance cap. Its
-securities component actually scored below its band median at the freeze. What
-fired for it was growth, uninsured share, and margin trend, enough for 8th of
-35 but nothing like the top-of-band signal the others gave. A screen that
-equal-weights six ratios doesn't get to catch everything.
+First Republic is the miss. The screen's rate-risk proxy is securities as a
+share of assets, which is the Silicon Valley Bank profile. First Republic
+parked its rate risk where these six metrics barely look: long fixed-rate
+jumbo mortgages, funded by wealthy clients whose balances sat far above the
+insurance cap. Its securities component scored below its band median at the
+freeze. What fired for it was growth, uninsured share, and margin trend,
+enough for 8th of 35 but nothing like the top-of-band signal the others gave.
 
 ## The false positives
 
-A screen is only honest if you look at what it flagged that didn't fail. Of
+The screen's false positives need the same accounting as its hits. Of
 the hundred banks in the top decile of the frozen composite, taking the 90th
 percentile within each band with ties included, 89 are still operating.
 Three of the eleven that aren't are the labeled cases above, and the other
@@ -167,7 +166,7 @@ filed after mid-2022, so the freeze reconstructs the mid-2022 view closely but
 not as a true point-in-time vintage. Both statements appear wherever results
 do, on the case-study page and in the README, not just here.
 
-Two more worth knowing before quoting any number. Winsorization saturates on
+Two more limitations affect specific numbers. Winsorization saturates on
 zero-inflated metrics: about 16% of brokered-share observations sit exactly at
 the +5 cap because most smaller banks hold no brokered deposits at all, which
 flattens distinctions among exactly the banks a reader most wants to compare

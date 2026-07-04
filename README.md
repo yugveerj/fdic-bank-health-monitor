@@ -49,16 +49,14 @@ data, the truncated rebuild could not match a mart computed over the full
 panel. The script also pins the labeled banks to their published ranks, and a
 fixture-scale version of the same proof runs on every pull request.
 
-First Republic is the miss, and the reason is instructive. My rate-risk proxy
-is securities as a share of assets, which is the Silicon Valley Bank profile.
-First Republic parked its rate risk where these six metrics barely look: long
-fixed-rate jumbo mortgages, funded by clients whose balances sat far above
-the insurance cap. Its securities component scored below its band median at
-the freeze; what fired was growth, uninsured share, and margin trend, enough
-for 8th of 35. A screen that equal-weights six ratios doesn't get to catch
-everything.
+First Republic is the miss. My rate-risk proxy is securities as a share of
+assets, which is the Silicon Valley Bank profile. First Republic parked its
+rate risk where these six metrics barely look: long fixed-rate jumbo
+mortgages, funded by clients whose balances sat far above the insurance cap.
+Its securities component scored below its band median at the freeze; what
+fired was growth, uninsured share, and margin trend, enough for 8th of 35.
 
-The flip side gets checked too. Of the hundred banks in the top decile of the
+The false positives are accounted for too. Of the hundred banks in the top decile of the
 frozen composite (90th percentile within each band, ties included), 89 are
 still operating; three of the eleven that aren't are the labeled banks above,
 and the other eight were acquired. The case-study page examines five of the
@@ -89,8 +87,8 @@ The two caveats under the results table govern everything. Beyond those:
   study, and the page is titled accordingly.
 - Quarterly data sees the setup, not the run. SVB went from stressed to gone
   in days; no quarterly screen catches that speed.
-- The composite compares within size bands only, and the over-$100B band puts
-  SVB next to JPMorgan, which flatters nobody's comparison. A business-model
+- The composite compares within size bands only, and the over-$100B band is
+  broad: it puts SVB in the same peer group as JPMorgan. A business-model
   peer view exists on the explorer as context; the composite stays on size
   bands so the published backtest ranks never move.
 - Uninsured-deposit figures are the banks' own reported estimates.
@@ -102,8 +100,7 @@ The best bugs in this project were in the data, not the code.
 The FDIC's failures endpoint includes more than failures. It also carries
 open-bank assistance records, which briefly marked Citibank and Bank of
 America as failed banks in my first pass. The fix requires an actual FAILURE
-resolution type, and a test now enforces it. Government data has semantics,
-and the semantics are not always what the endpoint name says.
+resolution type, and a test now enforces it.
 
 Winsorization saturates on zero-inflated ratios: most smaller banks report
 zero brokered deposits, which collapses the MAD and pins 16% of

@@ -1,9 +1,8 @@
 # Decisions
 
 Architecture-level decisions and the reasoning behind them, newest first. The
-README carries a one-line version of each; this file is the full account, and
-each entry tries to record not just what I chose but what I tried, what broke,
-and what would make me revisit it.
+README carries a one-line version of each; this file is the full account. Each
+entry records what I chose, what I tried first, and what broke along the way.
 
 ## 2026-07-04 — Bank profiles stay one searchable page, not a URL per bank
 
@@ -13,8 +12,8 @@ bank's trends. The build works. The deploy does not: each templated page
 prerenders its own query results, so 1,325 banks emit roughly 15,000 files,
 and the GitHub Pages deploy fails to sync that many. It dies at the
 `syncing_files` step every time, while the single-page build, about 106 MB
-across about 270 files, deploys in a couple of minutes. So the Pages ceiling
-that actually bit me is file count, not the ~100 MB total size I had been
+across about 270 files, deploys in a couple of minutes. So the Pages limit
+that matters in practice is file count, not the ~100 MB total size I had been
 watching. The profile page keeps a bank selector instead. Genuine per-bank
 links would need a host built for the file count, Cloudflare Pages or Netlify,
 or Evidence dropping per-page query prerendering.
@@ -24,8 +23,8 @@ exactly one Actions concurrency guard, on the deploy job. A second guard, even
 under a different group name on the build job, fails every deploy at that same
 `syncing_files` step while Pages itself is perfectly healthy. So the build job
 runs unserialized and the lone `pages-deploy` guard stands. The rare
-build-versus-refresh warehouse race a build guard would have covered heals
-itself on the next clean run.
+build-versus-refresh warehouse race a build guard would have covered resolves
+on the next clean run.
 
 ## 2026-07-04 — Business-model peer groups are context, not a new basis
 
@@ -34,8 +33,8 @@ Three fixed, documented thresholds classify every bank-quarter: loans under
 wholesale-funded, securities over 50% of assets is securities-focused, and
 everyone else lends for a living. Rules instead of clustering, because every
 assignment has to be explainable in one sentence. Fixed thresholds instead of
-fitted ones, because there is nothing to fit them against without lying to
-myself. And the whole thing ships as a context layer only: the outlier
+fitted ones, because the project has too few labeled outcomes to fit or
+validate cutoffs. And the whole thing ships as a context layer only: the outlier
 composite and the 2023 backtest stay on size bands exactly as published,
 because changing the peer basis underneath a published result would silently
 rewrite it.

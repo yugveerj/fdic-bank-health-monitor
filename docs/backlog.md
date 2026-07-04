@@ -39,8 +39,8 @@ Analysis improvements:
 
 - The profile page charts a bank's composite over time, tying it back to the
   screen.
-- The outlier screen shows how correlated the six screen metrics are. Honest
-  about overlap; the composite stays unweighted.
+- The outlier screen shows how correlated the six screen metrics are; the
+  composite stays unweighted regardless.
 
 Operational improvements:
 
