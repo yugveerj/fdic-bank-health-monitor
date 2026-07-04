@@ -1,5 +1,6 @@
 ---
 title: Data quality & lineage
+sidebar_position: 6
 ---
 
 How the sausage gets made: sources, tests, lineage, freshness. If you read one
@@ -23,20 +24,80 @@ institutions that filed and then closed. The figure above is the widest net:
 every institution that has crossed the scope bar since 2019, including banks
 that later failed or merged. Each page states which population it shows.
 
+```sql populations
+with latest as (select max(report_date) as d from fdic.fct_bank_quarters)
+select * from (
+    select 1 as ord, count(*) as n, 'Active banks reporting, latest quarter' as population,
+           'Homepage headline' as where_used
+    from fdic.fct_bank_quarters f join fdic.dim_banks b using (cert)
+    where f.report_date = (select d from latest) and b.is_active
+    union all
+    select 2, count(*), 'All latest-quarter reporters', 'Status table below'
+    from fdic.fct_bank_quarters where report_date = (select d from latest)
+    union all
+    select 3, count(*), 'Institutions ever in scope since 2019', 'Card above'
+    from fdic.dim_banks
+) order by ord
+```
+
+<DataTable data={populations}>
+    <Column id=n title="Count" fmt='#,##0'/>
+    <Column id=population title="Population"/>
+    <Column id=where_used title="Where it appears"/>
+</DataTable>
+
 ## Status, derived at build time
 
 Every row below is computed from the warehouse or a build artifact when the site
 is built. Nothing on this table is typed in by hand.
 
 ```sql status
-select "check", value, detail from fdic.quality_status
+select "check", value, detail,
+    case
+        when "check" in ('dbt tests', 'Duplicate keys') then 'Integrity'
+        when "check" like 'Latest%' then 'Freshness'
+        when "check" like 'Banks reporting%' then 'Population'
+        else 'Exclusions and oddities'
+    end as grp,
+    case
+        when "check" in ('dbt tests', 'Duplicate keys') then 1
+        when "check" like 'Latest%' then 2
+        when "check" like 'Banks reporting%' then 3
+        else 4
+    end as ord
+from fdic.quality_status
+order by ord, "check"
 ```
 
-<DataTable data={status} rows=12>
+<DataTable data={status} rows=12 groupBy=grp>
     <Column id=check title="Check"/>
     <Column id=value title="Value"/>
     <Column id=detail title="Detail"/>
 </DataTable>
+
+## What the tests caught
+
+Real findings, each of which changed the pipeline. The full stories live in the
+repository's [data-quality log](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/data_quality_log.md).
+
+- Depression-era failure records carry no certificate number, so failure rows
+  are keyed on the API's own ID instead of the obvious natural key.
+- A handful of insured filers aren't chartered banks (foreign-bank branches, a
+  clearing trust); the exclusion rows above are their receipts.
+- The failures feed includes open-bank assistance events; the failure label
+  requires an actual FAILURE resolution, and a test enforces it.
+- Winsorization saturates on zero-inflated ratios; the composite keeps the
+  capped score and the drill-down keeps an unclamped column.
+- Step-change growth marks likely acquisitions: the merger flag covers
+  <Value data={merger_stats} column=flagged fmt='#,##0'/> bank-quarters across
+  <Value data={merger_stats} column=banks fmt='#,##0'/> institutions, so
+  acquisition-driven growth is separable from the organic kind.
+
+```sql merger_stats
+select count(*) filter (likely_merger_quarter) as flagged,
+       count(distinct cert) filter (likely_merger_quarter) as banks
+from fdic.fct_bank_quarters
+```
 
 ## Pipeline
 
@@ -52,13 +113,7 @@ scheduled refresh picks up new quarters automatically.
 - **[Repository](https://github.com/yugveerj/fdic-bank-health-monitor)** — code,
   test history, and the running log of what the tests caught (README).
 
-## Notable things the tests caught
-
-The repository's [data-quality log](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/data_quality_log.md)
-records real findings as they happen: failure records with NULL certificate
-numbers from the 1930s, insured filers that aren't chartered banks, open-bank
-assistance events mislabeled as failures, and a z-score saturation effect on
-zero-inflated metrics.
-
 ![Architecture: FDIC and FRED APIs feed cached Python ingestion into a MotherDuck warehouse, dbt builds the models, and Evidence publishes a static site to GitHub Pages, all orchestrated by GitHub Actions](https://raw.githubusercontent.com/yugveerj/fdic-bank-health-monitor/main/docs/architecture.png)
+
+
 

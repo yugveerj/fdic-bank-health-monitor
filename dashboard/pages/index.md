@@ -1,6 +1,7 @@
 ---
 title: Bank Health Monitor
 description: "Which banks look unusual next to their peers? Every FDIC-insured US bank over one billion in assets, scored against banks of similar size, updated automatically."
+sidebar_position: 1
 og:
   image: https://yugveerj.github.io/fdic-bank-health-monitor/og-image.png
 ---
@@ -30,47 +31,78 @@ on. The data itself fought back too: federal failure records briefly labeled
 Citibank as failed, which is why this pipeline
 [tests its data](/data-quality).
 
+## Where to go next
+
+Start at the [peer-group explorer](/peer-explorer) to calibrate what normal looks
+like inside each size band. Then the [outlier screen](/outlier-screen) ranks the
+current quarter across three bands, and any name that catches your eye has its
+full history on the [bank profile](/bank-profile).
+
+## The sector at a glance
+
 ```sql latest
 select max(report_date) as latest_quarter from fdic.fct_bank_quarters
 ```
 
 ```sql kpis
+with two_q as (
+    select distinct report_date from fdic.fct_bank_quarters order by 1 desc limit 2
+),
+per_q as (
+    select
+        f.report_date,
+        count(*) filter (b.is_active)                          as active_reporting,
+        sum(total_assets)  filter (b.is_active) / 1e9          as sector_assets_t,
+        median(roa_pct)                filter (b.is_active)    as median_roa,
+        median(net_interest_margin_pct) filter (b.is_active)   as median_nim,
+        median(equity_to_assets)       filter (b.is_active)    as median_equity_ratio
+    from fdic.fct_bank_quarters f
+    join fdic.dim_banks b using (cert)
+    where f.report_date in (select report_date from two_q)
+    group by f.report_date
+)
 select
-    count(*)                                as banks_reporting,
-    count(*) filter (b.is_active)           as active_reporting,
-    sum(total_assets) / 1e9                 as sector_assets_t,
-    sum(total_deposits) / 1e9               as sector_deposits_t,
-    median(roa_pct)               filter (b.is_active) as median_roa,
-    median(net_interest_margin_pct) filter (b.is_active) as median_nim,
-    median(equity_to_assets)       filter (b.is_active) as median_equity_ratio
-from fdic.fct_bank_quarters f
-join fdic.dim_banks b using (cert)
-where report_date = (select latest_quarter from ${latest})
+    max_by(active_reporting, report_date)     as active_reporting,
+    max_by(sector_assets_t, report_date)      as sector_assets_t,
+    max_by(median_roa, report_date)           as median_roa,
+    max_by(median_nim, report_date)           as median_nim,
+    max_by(median_equity_ratio, report_date)  as median_equity_ratio,
+    min_by(median_roa, report_date)           as prior_roa,
+    min_by(median_nim, report_date)           as prior_nim,
+    min_by(active_reporting, report_date)     as prior_reporting
+from per_q
 ```
 
 <BigValue data={kpis} value=active_reporting title="Active banks reporting (latest quarter)"/>
-<BigValue data={kpis} value=sector_assets_t fmt='"$"#,##0.0"T"' title="Combined assets"/>
+<BigValue data={kpis} value=sector_assets_t fmt='"$"#,##0.0"T"' title="Combined assets (active banks)"/>
 <BigValue data={kpis} value=median_roa fmt='#,##0.00"%"' title="Median ROA"/>
 <BigValue data={kpis} value=median_nim fmt='#,##0.00"%"' title="Median NIM"/>
 <BigValue data={kpis} value=median_equity_ratio fmt='pct1' title="Median equity/assets"/>
 
-<small>Hover for definitions: <abbr title="Return on assets. What the bank earned as a share of everything it holds. Around 1% is normal for a healthy bank.">ROA</abbr> · <abbr title="Net interest margin. The gap between what a bank earns on its loans and what it pays on its deposits. For most banks, this is the engine.">NIM</abbr> · <abbr title="The bank's own capital as a share of its balance sheet. A thicker cushion means more room to absorb losses.">equity/assets</abbr></small>
+<small>Prior quarter: <Value data={kpis} column=prior_reporting fmt='#,##0'/> active banks · median ROA <Value data={kpis} column=prior_roa fmt='#,##0.00'/>% · median NIM <Value data={kpis} column=prior_nim fmt='#,##0.00'/>%. Hover for definitions: <abbr title="Return on assets. What the bank earned as a share of everything it holds. Around 1% is normal for a healthy bank.">ROA</abbr> · <abbr title="Net interest margin. The gap between what a bank earns on its loans and what it pays on its deposits. For most banks, this is the engine.">NIM</abbr> · <abbr title="The bank's own capital as a share of its balance sheet. A thicker cushion means more room to absorb losses.">equity/assets</abbr></small>
 
 ## Sector balance sheet over time
+
+The sum grows for two reasons at once: banks grow, and banks cross the $1B scope
+bar into the panel. The right axis counts who is in the sum each quarter.
 
 ```sql sector_trend
 select
     report_date,
     sum(total_assets) / 1e6   as "Total assets ($B)",
-    sum(total_deposits) / 1e6 as "Total deposits ($B)"
+    sum(total_deposits) / 1e6 as "Total deposits ($B)",
+    count(*)                  as "Banks in panel"
 from fdic.fct_bank_quarters
 group by report_date order by report_date
 ```
 
-<LineChart data={sector_trend} x=report_date y={["Total assets ($B)", "Total deposits ($B)"]} yFmt='"$"#,##0"B"'/>
+<LineChart data={sector_trend} x=report_date y={["Total assets ($B)", "Total deposits ($B)"]} y2="Banks in panel" yFmt='"$"#,##0"B"' y2Fmt='#,##0'/>
 
+## Net interest margin, median bank by size band
 
-## Profitability and margin, median bank by peer band
+Margins were squeezed hardest through 2022 and have been rebuilding since. The
+largest banks run structurally thinner margins than the small-band median in
+every quarter of the panel.
 
 ```sql band_trend
 select report_date, peer_band,
@@ -79,10 +111,13 @@ from fdic.fct_bank_quarters
 group by report_date, peer_band order by report_date
 ```
 
-<LineChart data={band_trend} x=report_date y=median_nim series=peer_band yFmt='#,##0.0"%"' title="Median net interest margin by peer band"/>
-
+<LineChart data={band_trend} x=report_date y=median_nim series=peer_band yFmt='#,##0.0"%"'/>
 
 ## Funding mix, median bank
+
+The metric the screen watches most closely: the median bank's estimated
+uninsured share peaked just before the 2023 failures and has drifted lower
+since, while brokered funding roughly doubled off its low.
 
 ```sql funding_trend
 select report_date,
@@ -92,8 +127,9 @@ from fdic.fct_bank_quarters
 group by report_date order by report_date
 ```
 
-<LineChart data={funding_trend} x=report_date y={["Uninsured share (est.)", "Brokered share"]} yFmt=pct1/>
-
+<LineChart data={funding_trend} x=report_date y={["Uninsured share (est.)", "Brokered share"]} yFmt=pct1>
+    <ReferenceLine x='2023-03-31' label="2023 failures" lineType=dashed/>
+</LineChart>
 
 ## The weekly pulse (Federal Reserve H.8)
 
@@ -102,17 +138,22 @@ lending, and total assets across all US commercial banks. It's the freshest publ
 read on the sector between quarterly filings.
 
 ```sql h8
--- try_cast: with no local FRED key the extraction ships a single all-null row
--- whose parquet types degrade; casting keeps this correct in both worlds
-select try_cast(obs_date as date) as obs_date, series_title,
-       try_cast(value_billions as double) as value_billions
-from fdic.fred_h8
-where try_cast(obs_date as date) >= '2024-01-01'
-order by 1
+-- indexed so four series of very different size share one axis; try_cast keeps
+-- this correct when the local build has no FRED data
+with obs as (
+    select try_cast(obs_date as date) as obs_date, series_title,
+           try_cast(value_billions as double) as v
+    from fdic.fred_h8
+    where try_cast(obs_date as date) >= '2024-01-01'
+)
+select obs_date, series_title,
+       v / first_value(v) over (partition by series_title order by obs_date) * 100 as indexed
+from obs
+where v is not null
+order by obs_date
 ```
 
-<LineChart data={h8} x=obs_date y=value_billions series=series_title yFmt='"$"#,##0"B"'/>
-
+<LineChart data={h8} x=obs_date y=indexed series=series_title yFmt='#,##0' title="Indexed to the first 2024 week = 100"/>
 
 ---
 

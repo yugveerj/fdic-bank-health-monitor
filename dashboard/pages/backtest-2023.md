@@ -1,5 +1,6 @@
 ---
 title: 2023 case study
+sidebar_position: 5
 description: Freeze the data at June 30, 2022 — where did the banks that failed in 2023 rank among their peers nine months earlier?
 og:
   image: https://yugveerj.github.io/fdic-bank-health-monitor/og-image.png
@@ -18,11 +19,6 @@ known story in data that was available at the time. It is not a claim that I wou
 have called it in advance. Second, the FDIC's API serves current values, including
 amendments filed after mid-2022, so the freeze is a close reconstruction of the
 mid-2022 view rather than a perfect one.
-
-The exhibit reproduces from one command (`uv run python -m scripts.run_backtest`),
-which rebuilds every model from physically truncated data and proves the result
-matches this site's mart exactly — method and per-metric rationale:
-[backtest_method.md](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/backtest_method.md).
 
 ```sql frozen
 select
@@ -50,14 +46,13 @@ where o.report_date = '2022-06-30'
 select bank_name, peer_band, composite_score,
        rank_in_band || ' of ' || band_size as band_rank_display,
        band_pctile,
-       rank_overall || ' of ' || n_overall as overall_rank_display,
        case cert
            when 27330 then 'Liquidated Mar 2023'
            else 'Failed ' || strftime(failure_date, '%b %Y')
        end as outcome
 from ${frozen}
 where (is_failed and date_part('year', failure_date) = 2023) or cert = 27330
-order by composite_score desc
+order by band_pctile desc
 ```
 
 <DataTable data={labeled_2023}>
@@ -67,8 +62,16 @@ order by composite_score desc
     <Column id=composite_score title="Composite" fmt='#,##0.00'/>
     <Column id=band_rank_display title="Rank in band"/>
     <Column id=band_pctile title="Band pctile"/>
-    <Column id=overall_rank_display title="Rank overall"/>
 </DataTable>
+
+**Read this first — two honesty notes that govern everything below.** The
+screen's six metrics were chosen with knowledge of the 2023 events: this is a
+demonstration of screening methodology on historical data, not an out-of-sample
+discovery, and it claims no predictive validity. And the FDIC API serves current
+values, which may include amendments filed after mid-2022 — the freeze
+reconstructs the mid-2022 view approximately, not as a true point-in-time
+vintage.
+
 
 The screen works where the failure looked like the classic profile. Silicon Valley
 Bank ranks first of 35 in the over-$100B band at the freeze, with a
@@ -117,8 +120,8 @@ freeze. These are the trends the composite compressed into one number.
 
 ```sql labeled_trends
 select f.report_date, b.bank_name,
-       f.uninsured_deposit_share, f.securities_to_assets,
-       f.equity_to_assets, f.net_interest_margin_pct, f.brokered_deposit_share
+       f.uninsured_deposit_share, f.securities_to_assets, f.asset_growth_3y_cagr,
+       f.equity_to_assets, f.net_interest_margin_pct
 from fdic.fct_bank_quarters f
 join fdic.dim_banks b using (cert)
 where f.cert in (24735, 57053, 59017, 27330)
@@ -126,12 +129,28 @@ where f.cert in (24735, 57053, 59017, 27330)
 order by f.report_date
 ```
 
+<Grid cols=2>
 <LineChart data={labeled_trends} x=report_date y=uninsured_deposit_share series=bank_name yFmt=pct0 title="Estimated uninsured-deposit share"/>
 <LineChart data={labeled_trends} x=report_date y=securities_to_assets series=bank_name yFmt=pct0 title="Securities / assets"/>
+<LineChart data={labeled_trends} x=report_date y=asset_growth_3y_cagr series=bank_name yFmt=pct0 title="Asset growth, 3-yr CAGR"/>
 <LineChart data={labeled_trends} x=report_date y=equity_to_assets series=bank_name yFmt=pct1 title="Equity / assets"/>
 <LineChart data={labeled_trends} x=report_date y=net_interest_margin_pct series=bank_name yFmt='#,##0.0"%"' title="Net interest margin"/>
+</Grid>
 
-## The frozen 2022-Q2 distribution, all banks
+## Where the labeled banks sat among all 989
+
+989 composites at the freeze; the labeled institutions are marked.
+
+```sql labeled_lines
+select bank_name, composite_score from ${frozen}
+where cert in (24735, 57053, 59017, 27330)
+```
+
+<Histogram data={frozen} x=composite_score title="All frozen composites, 2022-06-30">
+    <ReferenceLine data={labeled_lines} x=composite_score label=bank_name labelPosition=aboveEnd/>
+</Histogram>
+
+## The top of each band at the freeze
 
 ```sql top_frozen
 select bank_name, peer_band, composite_score,
@@ -225,6 +244,25 @@ The pattern across all five: the screen reads balance-sheet shape, and some
 business models wear an unusual shape comfortably. That's why this is a shortlist,
 not a verdict, and why the analyst reading the shortlist still matters.
 
+```sql five_examined
+select bank_name, peer_band, composite_score,
+       rank_in_band || ' of ' || band_size as rank_display
+from ${frozen}
+where cert in (14778, 58463, 57833, 57358, 57710)
+order by composite_score desc
+```
+
+The five, as the frozen screen saw them:
+
+<DataTable data={five_examined}>
+    <Column id=bank_name/>
+    <Column id=peer_band title="Band"/>
+    <Column id=composite_score title="Composite" fmt='#,##0.00'/>
+    <Column id=rank_display title="Rank in band"/>
+</DataTable>
+
+### Top 10 of the flagged decile
+
 ```sql false_positives
 select o.cert, o.bank_name, o.peer_band, o.composite_score, o.n_screen_metrics,
        o.rank_in_band || ' of ' || o.band_size as rank_display,
@@ -244,11 +282,24 @@ limit 10
     <Column id=composite_score title="Composite" fmt='#,##0.00'/>
     <Column id=n_screen_metrics title="Metrics"/>
     <Column id=rank_display title="Rank"/>
-    <Column id=merger_flagged title="Merger-flagged"/>
+    <Column id=merger_flagged title="Merger-flagged (2022-Q2)"/>
 </DataTable>
 
-One disambiguation: the Signature Bank in this table (a $1B–$10B bank, FDIC cert
-58264) is a different institution from the failed New York Signature Bank.
+The merger flag applies to the freeze quarter only; growth-window acquisitions
+can sit in earlier quarters. One disambiguation: the Signature Bank in this
+table (a $1B–$10B bank, FDIC cert 58264) is a different institution from the
+failed New York Signature Bank.
+
+What this page argues for is the method running today: the
+[outlier screen](/outlier-screen) applies the same six metrics to the latest
+quarter, and the [data-quality page](/data-quality) shows the tests behind the
+numbers.
+
+The exhibit reproduces from one command (`uv run python -m scripts.run_backtest`),
+which rebuilds every model from data physically truncated at the freeze date and
+proves the result matches this site's mart exactly — methodology and per-metric
+rationale:
+[backtest_method.md](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/backtest_method.md).
 
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: Peer-group explorer
+sidebar_position: 2
 ---
 
 Pick a <abbr title="Banks are only compared against banks of similar size: $1–10B, $10–100B, and over $100B in assets.">size band</abbr> and a metric. The page shows the full distribution and who sits in
@@ -36,7 +37,7 @@ select distinct metric,
 from fdic.mart_peer_percentiles order by metric_label
 ```
 
-<Dropdown data={bands} name=band value=peer_band title="Peer band" defaultValue="$1B-$10B"/>
+<Dropdown data={bands} name=band value=peer_band title="Size band" defaultValue="$1B-$10B"/>
 <Dropdown data={metrics} name=metric value=metric label=metric_label title="Metric" defaultValue="roa_pct"/>
 
 ```sql selection
@@ -53,7 +54,9 @@ where p.report_date = (select latest_quarter from ${latest})
 select
     quantile_cont(value, 0.10) as p10,
     median(value)              as p50,
-    quantile_cont(value, 0.90) as p90
+    quantile_cont(value, 0.90) as p90,
+    min(value) filter (robust_z >= 2)  as z_plus2,
+    max(value) filter (robust_z <= -2) as z_minus2
 from ${selection}
 ```
 
@@ -70,8 +73,14 @@ where bank_name = '${inputs.highlight.value}' limit 1
     <ReferenceLine data={markers} x=p10 label="10th" lineType=dashed color=#94a3b8/>
     <ReferenceLine data={markers} x=p50 label="median" color=#2563eb/>
     <ReferenceLine data={markers} x=p90 label="90th" lineType=dashed color=#94a3b8/>
+    <ReferenceLine data={markers} x=z_plus2 label="z ≈ +2" lineType=dotted color=#b45309/>
+    <ReferenceLine data={markers} x=z_minus2 label="z ≈ −2" lineType=dotted color=#b45309/>
     <ReferenceLine data={highlight} x=value label={inputs.highlight.value} color=#dc2626 lineWidth=2/>
 </Histogram>
+
+Banks beyond the dotted lines are the ones the screen scores as more than two
+robust standard deviations from the band median on this metric — the same
+yardstick every z on this site uses.
 
 <DataTable data={markers}>
     <Column id=p10 title="10th percentile"/>
@@ -96,9 +105,9 @@ order by value desc
 
 <DataTable data={deciles} rows=40>
     <Column id=bank_name/>
-    <Column id=cert/>
-    <Column id=value/>
-    <Column id=robust_z title="Robust z"/>
+    <Column id=cert title='FDIC cert' fmt='0'/>
+    <Column id=value fmt='#,##0.000'/>
+    <Column id=robust_z title="Robust z" fmt='#,##0.0'/>
     <Column id=decile/>
 </DataTable>
 
