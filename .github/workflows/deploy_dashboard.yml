@@ -99,3 +99,8 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # defaults give up after 10 status errors / 10 minutes, which is what
+          # kept failing overnight while the Pages backend was throttling
+          error_count: 30
+          timeout: 1200000
