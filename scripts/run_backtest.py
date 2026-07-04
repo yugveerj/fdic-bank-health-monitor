@@ -38,6 +38,18 @@ OUT_DIR = Path(os.environ.get("BACKTEST_OUT_DIR", ROOT / "docs" / "backtest")).r
 LABELED = {24735: "failed", 57053: "failed", 59017: "failed", 27330: "liquidated"}
 OUT_OF_WINDOW = {27332: "failed_2024"}
 
+# Published, FROZEN backtest ranks at the 2022-06-30 freeze (CLAUDE.md standing
+# rule: these never change silently). Asserted on every canonical production run
+# (see assert_frozen_ranks). cert -> (peer_band, rank_in_band, band_size, rank_overall).
+FROZEN_RANKS = {
+    27330: ("$10B-$100B", 2, 128, 8),
+    24735: (">$100B", 1, 35, 26),
+    57053: (">$100B", 2, 35, 60),
+    59017: (">$100B", 8, 35, 355),
+    27332: ("$1B-$10B", 86, 826, 95),
+}
+FROZEN_N_OVERALL = 989
+
 
 def build_frozen_warehouse() -> None:
     BACKTEST_DB.unlink(missing_ok=True)
@@ -180,6 +192,55 @@ def emit_exhibits() -> None:
         con.close()
 
 
+def assert_frozen_ranks() -> None:
+    """The labeled banks' ranks must match the published frozen values.
+
+    prove_equivalence only shows the frozen build agrees with production; it cannot
+    catch a change to the composite formula, the metric set, or the sign directions,
+    because both sides move together. This pins the actual output numbers. Skipped
+    when FDIC_PROD_DB is overridden (the CI fixture or an alternate warehouse), where
+    the universe — and therefore the ranks — legitimately differ.
+    """
+    if os.environ.get("FDIC_PROD_DB"):
+        log.info("frozen-rank assertion skipped: FDIC_PROD_DB overrides the production warehouse")
+        return
+    con = duckdb.connect(str(BACKTEST_DB), read_only=True)
+    try:
+        rows = con.execute(
+            f"""
+            WITH ranked AS (
+                SELECT cert, peer_band,
+                    rank()   OVER (PARTITION BY peer_band ORDER BY composite_score DESC) AS rank_in_band,
+                    count(*) OVER (PARTITION BY peer_band) AS band_size,
+                    rank()   OVER (ORDER BY composite_score DESC) AS rank_overall,
+                    count(*) OVER () AS n_overall
+                FROM main.mart_outlier_flags WHERE report_date = DATE '{AS_OF}'
+            )
+            SELECT cert, peer_band, rank_in_band, band_size, rank_overall, n_overall
+            FROM ranked WHERE cert IN ({",".join(str(c) for c in FROZEN_RANKS)})
+            """
+        ).fetchall()
+        found = {r[0]: r[1:] for r in rows}
+        problems = []
+        for cert, expected in FROZEN_RANKS.items():
+            if cert not in found:
+                problems.append(f"cert {cert} absent from the frozen composite")
+                continue
+            band, rib, bsize, roverall, n_overall = found[cert]
+            if (band, rib, bsize, roverall) != expected or n_overall != FROZEN_N_OVERALL:
+                problems.append(
+                    f"cert {cert}: got {band} {rib}/{bsize} overall {roverall}/{n_overall}; "
+                    f"expected {expected[0]} {expected[1]}/{expected[2]} overall {expected[3]}/{FROZEN_N_OVERALL}"
+                )
+        if problems:
+            log.error("FROZEN RANKS CHANGED — the published backtest results moved:\n  %s",
+                      "\n  ".join(problems))
+            raise SystemExit(1)
+        log.info("frozen ranks verified: all %d labeled banks match the published values", len(FROZEN_RANKS))
+    finally:
+        con.close()
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     if not PROD_DB.exists():
@@ -188,6 +249,7 @@ def main() -> int:
     build_frozen_warehouse()
     prove_equivalence()
     emit_exhibits()
+    assert_frozen_ranks()
     return 0
 
 
