@@ -74,8 +74,7 @@ vintage.
 
 
 The screen works where the failure looked like the classic profile. Silicon Valley
-Bank ranks first of 35 in the over-$100B band at the freeze, with a
-<abbr title="The average of six risk-signed z-scores. Higher means the bank's funding, growth, and balance-sheet mix sit further from its peer group, in the direction that history says to watch.">composite</abbr> of
+Bank ranks first of 35 in the over-$100B band at the freeze, with a <abbr title="The average of six risk-signed z-scores. Higher means the bank's funding, growth, and balance-sheet mix sit further from its peer group, in the direction that history says to watch.">composite</abbr> of
 1.73. Signature ranks second at 1.45. Silvergate, which wound itself down
 voluntarily in March 2023 rather than failing, ranks second of 128 in the $10–100B
 band at 2.09. Three institutions that ended in 2023, all sitting at or near the top
@@ -119,8 +118,8 @@ The labeled banks' raw screen ingredients, every quarter from 2019 to the
 freeze. These are the trends the composite compressed into one number.
 
 ```sql labeled_trends
-select f.report_date, b.bank_name,
-       f.uninsured_deposit_share, f.securities_to_assets, f.asset_growth_3y_cagr,
+select f.report_date, b.bank_name, f.total_assets / 1e6 as total_assets_b,
+       f.uninsured_deposit_share, f.securities_to_assets,
        f.equity_to_assets, f.net_interest_margin_pct
 from fdic.fct_bank_quarters f
 join fdic.dim_banks b using (cert)
@@ -129,13 +128,11 @@ where f.cert in (24735, 57053, 59017, 27330)
 order by f.report_date
 ```
 
-<Grid cols=2>
+<LineChart data={labeled_trends} x=report_date y=total_assets_b series=bank_name yFmt='"$"#,##0"B"' title="Total assets — the growth the screen scored"/>
 <LineChart data={labeled_trends} x=report_date y=uninsured_deposit_share series=bank_name yFmt=pct0 title="Estimated uninsured-deposit share"/>
 <LineChart data={labeled_trends} x=report_date y=securities_to_assets series=bank_name yFmt=pct0 title="Securities / assets"/>
-<LineChart data={labeled_trends} x=report_date y=asset_growth_3y_cagr series=bank_name yFmt=pct0 title="Asset growth, 3-yr CAGR"/>
 <LineChart data={labeled_trends} x=report_date y=equity_to_assets series=bank_name yFmt=pct1 title="Equity / assets"/>
 <LineChart data={labeled_trends} x=report_date y=net_interest_margin_pct series=bank_name yFmt='#,##0.0"%"' title="Net interest margin"/>
-</Grid>
 
 ## Where the labeled banks sat among all 989
 
@@ -233,10 +230,8 @@ capital cushion so thick that its equity component scored safer than its peer
 band.
 
 Stifel Bank of Saint Louis has no acquisitions in the FDIC record for the window;
-its flagged growth is sweep deposits arriving from its brokerage affiliate —
-<abbr title="Deposits bought through middlemen instead of gathered from local customers. Cheap to scale up. Quick to leave.">brokered</abbr> by design, organic in the only sense a ratio can't see. Greene
-County Commercial Bank of Catskill, New York holds municipal deposits —
-<abbr title="The slice of deposits above the FDIC's $250,000 insurance cap. These are the dollars with a reason to run.">uninsured</abbr> on paper, collateralized in practice — parked in securities, so
+its flagged growth is sweep deposits arriving from its brokerage affiliate — <abbr title="Deposits bought through middlemen instead of gathered from local customers. Cheap to scale up. Quick to leave.">brokered</abbr> by design, organic in the only sense a ratio can't see. Greene
+County Commercial Bank of Catskill, New York holds municipal deposits — <abbr title="The slice of deposits above the FDIC's $250,000 insurance cap. These are the dollars with a reason to run.">uninsured</abbr> on paper, collateralized in practice — parked in securities, so
 the two metrics built to catch flighty money and rate risk both fired on a
 business model designed around exactly those features.
 

@@ -31,8 +31,7 @@ select max(report_date) as latest_quarter from fdic.mart_outlier_flags
 select distinct peer_band from fdic.mart_outlier_flags order by peer_band
 ```
 
-Scores below are for the quarter ended
-<Value data={latest} column=latest_quarter fmt='mmmm d, yyyy'/>.
+<small>Scores below are for the quarter ended <Value data={latest} column=latest_quarter fmt='mmmm d, yyyy'/></small>
 
 <Dropdown data={bands} name=band value=peer_band title="Size band" defaultValue="$1B-$10B"/>
 
