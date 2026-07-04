@@ -87,8 +87,7 @@ with ranked as (
     from ${selection}
     where value is not null
 )
-select bank_name, cert, '/bank-profile/' || cast(cert as integer) as profile_url,
-       value, robust_z,
+select bank_name, cert, value, robust_z,
        case when pr >= 0.9 then 'Top decile' else 'Bottom decile' end as decile
 from ranked
 where pr >= 0.9 or pr <= 0.1
@@ -96,7 +95,7 @@ order by value desc
 ```
 
 <DataTable data={deciles} rows=40>
-    <Column id=profile_url contentType=link linkLabel=bank_name title="Bank"/>
+    <Column id=bank_name/>
     <Column id=cert/>
     <Column id=value/>
     <Column id=robust_z title="Robust z"/>
