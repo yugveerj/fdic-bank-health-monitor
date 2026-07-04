@@ -1,7 +1,6 @@
 # Backlog
 
-Ideas I'm deliberately not building yet. The feature set is frozen; anything
-new lands here first.
+Queued ideas, roughly in the order I'd take them on.
 
 - Business-model peer groups. Size-only bands put SVB next to JPMorgan; grouping
   by funding profile or loan mix would sharpen every comparison. First upgrade
