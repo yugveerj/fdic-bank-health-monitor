@@ -40,6 +40,3 @@ zero-inflated metrics.
 
 ![Architecture](https://raw.githubusercontent.com/yugveerj/fdic-bank-health-monitor/main/docs/architecture.png)
 
----
-
-_Peer-relative statistics, not assessments of safety or soundness._

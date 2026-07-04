@@ -71,5 +71,5 @@ order by value desc
 
 ---
 
-_Peer-relative statistics, not assessments of safety or soundness. High or low
-values are statements about position in a distribution, nothing more._
+High or low values here are statements about position in a distribution,
+nothing more.

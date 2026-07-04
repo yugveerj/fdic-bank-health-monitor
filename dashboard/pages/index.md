@@ -52,7 +52,6 @@ group by report_date order by report_date
 
 <LineChart data={sector_trend} x=report_date y={["Total assets ($B)", "Total deposits ($B)"]} yFmt='"$"#,##0"B"'/>
 
-<!-- TODO(revise): takeaway -->
 
 ## Profitability and margin, median bank by peer band
 
@@ -65,7 +64,6 @@ group by report_date, peer_band order by report_date
 
 <LineChart data={band_trend} x=report_date y=median_nim series=peer_band yFmt='#,##0.0"%"' title="Median net interest margin by peer band"/>
 
-<!-- TODO(revise): takeaway -->
 
 ## Funding mix, median bank
 
@@ -79,7 +77,6 @@ group by report_date order by report_date
 
 <LineChart data={funding_trend} x=report_date y={["Uninsured share (est.)", "Brokered share"]} yFmt=pct1/>
 
-<!-- TODO(revise): takeaway -->
 
 ## The weekly pulse (Federal Reserve H.8)
 
@@ -96,9 +93,8 @@ order by obs_date
 
 <LineChart data={h8} x=obs_date y=value_billions series=series_title yFmt='"$"#,##0"B"'/>
 
-<!-- TODO(revise): takeaway -->
 
 ---
 
-_All figures are peer-relative statistical descriptions of public regulatory
-filings — not assessments of any institution's safety or soundness._
+Peer-relative statistics from public filings, never an assessment of any
+bank's condition.

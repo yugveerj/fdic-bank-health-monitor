@@ -8,7 +8,7 @@ models:
         description: FDIC certificate number — the bank's stable identifier.
         tests: [unique, not_null]
       - name: bank_name
-        description: Legal institution name from the FDIC registry.
+        description: Legal name.
         tests: [not_null]
       - name: city
         description: Headquarters city.
@@ -17,19 +17,19 @@ models:
       - name: state_name
         description: Full headquarters state name.
       - name: bank_class
-        description: FDIC charter class code (N, NM, SB, SM, ...).
+        description: FDIC charter class code.
       - name: is_active
-        description: Whether the charter is currently active (ACTIVE=1 at the FDIC).
+        description: Charter currently active.
       - name: established_date
         description: Charter establishment date.
       - name: end_of_existence_date
         description: Date the charter ceased to exist (merger, failure, liquidation); null if active.
       - name: website
-        description: Institution website as registered with the FDIC.
+        description: Website.
       - name: current_assets
-        description: Latest reported total assets, thousands of dollars.
+        description: Latest total assets, thousands.
       - name: current_deposits
-        description: Latest reported total deposits, thousands of dollars.
+        description: Latest total deposits, thousands.
       - name: is_failed
         description: >
           True only for actual FAILURE resolutions. The FDIC failures endpoint also
@@ -39,9 +39,9 @@ models:
       - name: failure_date
         description: Failure date if is_failed.
       - name: resolution_type
-        description: FDIC resolution type for the failure (e.g. FAILURE).
+        description: Resolution type.
       - name: assets_at_failure
-        description: Total assets on the failure record (QBFASSET), thousands.
+        description: QBFASSET, thousands.
 
   - name: fct_bank_quarters
     description: Grain bank x quarter — every level, ratio, growth rate and the peer band.
@@ -82,23 +82,23 @@ models:
       - name: net_interest_margin_pct
         description: Net interest margin (NIMY), percent.
       - name: efficiency_ratio_pct
-        description: Efficiency ratio (EEFFR), percent — lower is leaner.
+        description: Efficiency ratio (EEFFR), percent.
       - name: noninterest_income_ratio_pct
-        description: Noninterest income ratio (NONIIR), percent.
+        description: NONIIR, percent.
       - name: cost_of_funds_pct
-        description: Interest expense to earning assets (INTEXPY), percent.
+        description: INTEXPY, percent.
       - name: noncurrent_loans_ratio_pct
-        description: Noncurrent loans / gross loans (NCLNLSR), percent.
+        description: NCLNLSR, percent.
       - name: net_chargeoffs_ratio_pct
-        description: Net charge-offs ratio (NTLNLSCOR), percent.
+        description: NTLNLSCOR, percent.
       - name: nonperforming_assets_ratio_pct
-        description: Nonperforming assets / total assets (NPERFV), percent.
+        description: NPERFV, percent.
       - name: cet1_ratio_pct
-        description: Common equity tier 1 ratio (RBCT1CER), percent.
+        description: RBCT1CER, percent.
       - name: total_rbc_ratio_pct
-        description: Total risk-based capital ratio (RBCRWAJ), percent.
+        description: RBCRWAJ, percent.
       - name: leverage_ratio_pct
-        description: Leverage ratio (RBC1AAJ), percent.
+        description: RBC1AAJ, percent.
       - name: equity_to_assets
         description: EQ / ASSET, as a fraction.
       - name: loans_to_deposits

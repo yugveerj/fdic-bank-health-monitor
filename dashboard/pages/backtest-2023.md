@@ -159,9 +159,9 @@ order by peer_band, rank_in_band
 - **Silvergate Bank** wound down voluntarily in March 2023 and therefore does not
   appear in the FDIC failures data; it is labeled separately above rather than
   silently mixed in.
-- Banks listed without a note are **currently operating institutions**; their
-  position in a 2022 distribution is a peer-relative statistic from that quarter's
-  filings — nothing more.
+- Banks listed without a note are **currently operating institutions**. Their
+  position in a 2022 distribution is just that: a statistic from one quarter's
+  filings.
 
 ## An out-of-window check: Republic First
 

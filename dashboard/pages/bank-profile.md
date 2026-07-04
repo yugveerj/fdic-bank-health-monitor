@@ -81,6 +81,3 @@ from ${bank_history} order by report_date
 <LineChart data={quality} x=report_date y={["noncurrent_loans_ratio_pct", "net_chargeoffs_ratio_pct"]} yFmt='#,##0.00"%"' title="Noncurrent loans and net charge-offs"/>
 <LineChart data={quality} x=report_date y=asset_growth_yoy yFmt=pct0 title="Asset growth, year over year"/>
 
----
-
-_Peer-relative statistics, not assessments of safety or soundness._

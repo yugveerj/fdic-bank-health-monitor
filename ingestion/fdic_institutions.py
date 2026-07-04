@@ -1,5 +1,4 @@
-"""All FDIC-insured institutions, active and inactive — no ACTIVE filter, because
-the backtest needs failed and merged banks present (ACTIVE=0 marks them)."""
+"""All FDIC-insured institutions, active and inactive."""
 
 from __future__ import annotations
 
