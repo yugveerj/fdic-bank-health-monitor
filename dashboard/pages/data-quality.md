@@ -60,5 +60,5 @@ numbers from the 1930s, insured filers that aren't chartered banks, open-bank
 assistance events mislabeled as failures, and a z-score saturation effect on
 zero-inflated metrics.
 
-![Architecture](https://raw.githubusercontent.com/yugveerj/fdic-bank-health-monitor/main/docs/architecture.png)
+![Architecture: FDIC and FRED APIs feed cached Python ingestion into a MotherDuck warehouse, dbt builds the models, and Evidence publishes a static site to GitHub Pages, all orchestrated by GitHub Actions](https://raw.githubusercontent.com/yugveerj/fdic-bank-health-monitor/main/docs/architecture.png)
 
