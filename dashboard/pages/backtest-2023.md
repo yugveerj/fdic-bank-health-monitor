@@ -1,27 +1,28 @@
 ---
 title: 2023 case study
+description: Freeze the data at June 30, 2022 — where did the banks that failed in 2023 rank among their peers nine months earlier?
+og:
+  image: https://yugveerj.github.io/fdic-bank-health-monitor/og-image.png
 ---
-
-<!-- TODO(revise): the interpretive narrative on this page is mine — the exhibits
-     are generated, the words about them should be in my voice and defensible. -->
 
 ## Would this screen have flagged the 2023 bank failures?
 
-This page freezes the composite screen at **2022-06-30** and shows where the
-banks at the center of the 2023 banking stress ranked among their peers nine
-months earlier. The entire exhibit reproduces from one command
-(`uv run python -m scripts.run_backtest`), which rebuilds every model from data
-physically truncated at the freeze date and proves the result matches this
-site's mart exactly — methodology and per-metric rationale:
-[backtest_method.md](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/backtest_method.md).
+This page freezes the data at June 30, 2022 and asks where the banks that failed in
+2023 ranked among their peers nine months earlier, using only what had been reported
+by that date. 989 banks make the <abbr title="Only data reported on or before June 30, 2022. In other words, what an analyst could actually have seen nine months before the failures.">frozen</abbr> snapshot: 826 in the $1–10B band, 128 in
+$10–100B, 35 above $100B.
 
-**Read this first — two honesty notes that govern everything below.** The
-screen's six metrics were chosen with knowledge of the 2023 events: this is a
-demonstration of screening methodology on historical data, not an out-of-sample
-discovery, and it claims no predictive validity. And the FDIC API serves current
-values, which may include amendments filed after mid-2022 — the freeze
-reconstructs the mid-2022 view approximately, not as a true point-in-time
-vintage.
+Two things to keep in mind while reading. First, I picked these six metrics knowing
+how 2023 ended. So this is a test of whether a simple peer screen can express a
+known story in data that was available at the time. It is not a claim that I would
+have called it in advance. Second, the FDIC's API serves current values, including
+amendments filed after mid-2022, so the freeze is a close reconstruction of the
+mid-2022 view rather than a perfect one.
+
+The exhibit reproduces from one command (`uv run python -m scripts.run_backtest`),
+which rebuilds every model from physically truncated data and proves the result
+matches this site's mart exactly — method and per-metric rationale:
+[backtest_method.md](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/backtest_method.md).
 
 ```sql frozen
 select
@@ -44,12 +45,6 @@ where o.report_date = '2022-06-30'
 ```
 
 ## The 2023 events
-
-The label set is the three 2023 failures large enough for this project's $1B
-scope, plus Silvergate's voluntary liquidation, labeled separately because it
-does not appear in FDIC failure data. With only four labeled events, results
-are presented as ranks and distribution positions — capture rates or lift
-statistics would be meaningless at this n.
 
 ```sql labeled_2023
 select bank_name, peer_band, composite_score,
@@ -75,9 +70,45 @@ order by composite_score desc
     <Column id=overall_rank_display title="Rank overall"/>
 </DataTable>
 
-<!-- TODO(revise): my read of this table, including the honest sentence about
-     First Republic sitting at the 79th percentile of its band — what the six
-     metrics structurally could and couldn't see about it. -->
+The screen works where the failure looked like the classic profile. Silicon Valley
+Bank ranks first of 35 in the over-$100B band at the freeze, with a
+<abbr title="The average of six risk-signed z-scores. Higher means the bank's funding, growth, and balance-sheet mix sit further from its peer group, in the direction that history says to watch.">composite</abbr> of
+1.73. Signature ranks second at 1.45. Silvergate, which wound itself down
+voluntarily in March 2023 rather than failing, ranks second of 128 in the $10–100B
+band at 2.09. Three institutions that ended in 2023, all sitting at or near the top
+of their peer groups nine months out, on public data alone.
+
+First Republic is the honest miss. At the freeze it ranked 8th of 35 with a
+composite of 0.61. Elevated, not alarming. The reason is instructive: my rate-risk
+proxy is <abbr title="How much of the balance sheet sits in bonds. Safe in credit terms. In a fast rate-hiking cycle, painful in price terms.">securities as a share of assets</abbr>, and that's the SVB profile. First
+Republic parked its rate risk somewhere these six metrics barely look, in long
+fixed-rate jumbo mortgages, funded by wealthy clients whose balances sat far above
+the insurance cap. The per-metric table below shows which components fired for it
+and which stayed quiet. A screen that equal-weights six ratios doesn't get to catch
+everything, and pretending otherwise would be worse than the miss.
+
+```sql labeled_components
+select o.bank_name,
+       o.composite_score,
+       f.z_uninsured_share, f.z_brokered_share, f.z_securities_share,
+       f.z_asset_growth_3y, f.z_nim_trend, f.z_equity_ratio
+from ${frozen} o
+join fdic.mart_outlier_flags f
+  on f.cert = o.cert and f.report_date = '2022-06-30'
+where (o.is_failed and date_part('year', o.failure_date) = 2023) or o.cert = 27330
+order by o.composite_score desc
+```
+
+<DataTable data={labeled_components}>
+    <Column id=bank_name/>
+    <Column id=composite_score title="Composite" fmt='#,##0.00'/>
+    <Column id=z_uninsured_share title="Uninsured z" fmt='#,##0.0'/>
+    <Column id=z_brokered_share title="Brokered z" fmt='#,##0.0'/>
+    <Column id=z_securities_share title="Securities z" fmt='#,##0.0'/>
+    <Column id=z_asset_growth_3y title="3y growth z" fmt='#,##0.0'/>
+    <Column id=z_nim_trend title="NIM trend z" fmt='#,##0.0'/>
+    <Column id=z_equity_ratio title="Equity z" fmt='#,##0.0'/>
+</DataTable>
 
 ## What the screen's inputs looked like as 2022 approached
 
@@ -132,17 +163,67 @@ order by peer_band, rank_in_band
   position in a 2022 distribution is a peer-relative statistic from that quarter's
   filings — nothing more.
 
-## The top decile that didn't fail
+## An out-of-window check: Republic First
 
-A screen that only surfaced future failures would be suspicious; this one's top
-decile is mostly banks that went on to be fine, and looking at *why they scored
-high* is part of honest methodology. Recurring shapes: brokered-deposit z-scores
-pinned at the +5 winsorization boundary (a documented saturation on
-zero-inflated metrics), composites resting on four or five of the six metrics,
-and acquisition-driven growth — the merger flag below separates step-change
-growth from the organic deposit-inflow kind. One disambiguation: the Signature
-Bank appearing here (cert 58264, a $1B–$10B bank) is a different institution
-from the failed New York Signature Bank.
+One more failure gets a look, clearly separated from the 2023 set. Republic First
+(it did business as Republic Bank, Philadelphia) failed in April 2024, ten months
+past the window this page tests. At the freeze it sat 86th of 826 in its band with
+a composite of 1.23. Top decile, nothing dramatic. I left it in because quietly
+dropping the awkward case is exactly what a screen like this should never do.
+
+```sql republic
+select bank_name, peer_band, composite_score,
+       rank_in_band || ' of ' || band_size as band_rank_display,
+       band_pctile,
+       'Failed ' || strftime(failure_date, '%b %Y') as outcome
+from ${frozen}
+where cert = 27332
+```
+
+<DataTable data={republic}>
+    <Column id=bank_name/>
+    <Column id=outcome/>
+    <Column id=peer_band title="Band"/>
+    <Column id=composite_score title="Composite" fmt='#,##0.00'/>
+    <Column id=band_rank_display title="Rank in band"/>
+    <Column id=band_pctile title="Band pctile"/>
+</DataTable>
+
+What I'd actually claim for this method: it's a shortlist generator. Six ratios,
+equal weights, no fitting. It hands an analyst a small stack of banks worth an
+afternoon each, and in mid-2022 those afternoons would have been well spent. The
+false-positive section below is the other half of that argument.
+
+## The banks the screen flagged that didn't fail
+
+A screen is only honest if you look at what it got wrong. Of the 100 banks in the
+top decile of the frozen composite (at or above the 90th percentile of their size
+band, ties included), 89 are still operating today; of the eleven that aren't,
+three are the cases above and the rest were acquired, not failed. I looked closely
+at five.
+
+First Bank & Trust of Lubbock, Texas and SmartBank of Pigeon Forge, Tennessee are
+growth artifacts. Both crossed the three-year growth threshold because they bought
+other banks, not because hot deposits flooded in. Acquisition growth and SVB-style
+organic growth look identical to a ratio and completely different to a human. The
+merger flag on the data quality page exists because of these two.
+
+Beal Bank USA of Las Vegas fired on brokered funding, securities, and margin
+trend — the standing shape of a wholesale-funded specialty lender, worn with a
+capital cushion so thick that its equity component scored safer than its peer
+band.
+
+Stifel Bank of Saint Louis has no acquisitions in the FDIC record for the window;
+its flagged growth is sweep deposits arriving from its brokerage affiliate —
+<abbr title="Deposits bought through middlemen instead of gathered from local customers. Cheap to scale up. Quick to leave.">brokered</abbr> by design, organic in the only sense a ratio can't see. Greene
+County Commercial Bank of Catskill, New York holds municipal deposits —
+<abbr title="The slice of deposits above the FDIC's $250,000 insurance cap. These are the dollars with a reason to run.">uninsured</abbr> on paper, collateralized in practice — parked in securities, so
+the two metrics built to catch flighty money and rate risk both fired on a
+business model designed around exactly those features.
+
+The pattern across all five: the screen reads balance-sheet shape, and some
+business models wear an unusual shape comfortably. That's why this is a shortlist,
+not a verdict, and why the analyst reading the shortlist still matters.
 
 ```sql false_positives
 select o.cert, o.bank_name, o.peer_band, o.composite_score, o.n_screen_metrics,
@@ -166,38 +247,8 @@ limit 10
     <Column id=merger_flagged title="Merger-flagged"/>
 </DataTable>
 
-<!-- TODO(revise): my written analysis of ~5 of these banks — what the screen
-     saw, why it didn't translate into failure, and which of them are
-     saturation artifacts versus genuinely unusual funding models. -->
-
-## Out-of-window check: Republic Bank (April 2024)
-
-One in-scope bank failed *after* the 2023 window this case study is built
-around: Republic Bank of Philadelphia (FDIC cert 27332, $5.9B at failure,
-April 2024). It is not part of the label set — the screen was assembled around
-the 2023 events — but pretending it doesn't exist would be curation, so its
-frozen-quarter result is reported here as-is: at 2022-06-30 the composite placed
-it at the 89.7th percentile of its band, just outside the top decile. Whatever
-that says about the screen's reach beyond its design window belongs in the
-limitations discussion, not in a quiet omission.
-
-```sql republic
-select bank_name, peer_band, composite_score,
-       rank_in_band || ' of ' || band_size as band_rank_display,
-       band_pctile,
-       'Failed ' || strftime(failure_date, '%b %Y') as outcome
-from ${frozen}
-where cert = 27332
-```
-
-<DataTable data={republic}>
-    <Column id=bank_name/>
-    <Column id=outcome/>
-    <Column id=peer_band title="Band"/>
-    <Column id=composite_score title="Composite" fmt='#,##0.00'/>
-    <Column id=band_rank_display title="Rank in band"/>
-    <Column id=band_pctile title="Band pctile"/>
-</DataTable>
+One disambiguation: the Signature Bank in this table (a $1B–$10B bank, FDIC cert
+58264) is a different institution from the failed New York Signature Bank.
 
 ---
 

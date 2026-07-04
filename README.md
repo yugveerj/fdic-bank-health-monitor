@@ -1,4 +1,4 @@
-# FDIC Bank Health Monitor
+# Bank Health Monitor
 
 ![CI](https://github.com/yugveerj/fdic-bank-health-monitor/actions/workflows/ci.yml/badge.svg)
 
@@ -8,19 +8,20 @@ an Evidence dashboard published to GitHub Pages, refreshed on a schedule by CI.
 
 **Live dashboard:** <https://yugveerj.github.io/fdic-bank-health-monitor/>
 
-## Problem statement
+## Why this exists
 
-<!-- TODO(revise) -->
-When Silicon Valley Bank failed in March 2023, the warning signs were sitting in
-public quarterly filings: a deposit base dominated by uninsured accounts, a
-balance sheet that had tripled in three years, a securities book carrying heavy
-duration into a rate-hiking cycle. None of it was secret — it just wasn't being
-*looked at* systematically. This project asks a narrow, testable question: if
-you compare every US bank over $1B to its size peers on a handful of public
-ratios, quarter after quarter, how visible were the 2023 banks nine months
-early — and what does a screen like that flag today? It's built for anyone who
-wants to explore that question honestly: the screen is peer-relative statistics,
-not predictions, and its limitations are documented as prominently as its hits.
+Three of the four largest bank failures in US history happened within about eight
+weeks in the spring of 2023, and the warning signs were sitting in public quarterly
+filings: funding concentrated in uninsured deposits, balance sheets heavy with
+rate-sensitive assets, growth that had outrun the peer group. I wanted to know
+whether a straightforward peer-comparison screen, built only on the FDIC's public
+data, would have surfaced those banks while it still mattered.
+
+This repo is the answer. An automated pipeline scores every US bank above $1B in
+assets against its size peers each quarter, and a point-in-time backtest freezes
+the data at June 2022 and checks the 2023 failures against it. SVB ranks first in
+its peer band at the freeze. First Republic doesn't, and the write-up doesn't hide
+that.
 
 ## Architecture
 
@@ -48,25 +49,21 @@ the freeze is approximate. Full methodology: [docs/backtest_method.md](docs/back
 
 ## Limitations
 
-<!-- TODO(revise) -->
-Four limitations govern how much the results can claim — the first two are the
-load-bearing honesty clauses, stated wherever results appear:
-
-1. **Hindsight in the metric selection.** I chose the six screen metrics knowing
-   how 2023 unfolded. The backtest demonstrates that a plausible screening
-   methodology would have ranked those banks as extreme outliers on mid-2022
-   data; it is not an out-of-sample discovery and claims no predictive validity.
-2. **The freeze is approximate.** The FDIC API serves current values, which may
-   include amendments filed after mid-2022. My as-of rebuild proves the *code*
-   uses only backward-looking data (989/989 composites identical to a physically
-   truncated rebuild), but a true point-in-time vintage would require archived
-   submissions I don't have.
-3. **Winsorization saturates zero-inflated metrics** — ~16% of brokered-share
-   observations share the +5 z-score boundary, flattening distinctions among the
-   most extreme banks (documented in "What the tests caught").
-4. **The 3-year growth metric excludes recent scope-entrants**, so roughly half
-   of composites rest on five metrics rather than six; `n_screen_metrics` makes
-   that visible everywhere.
+- The six screen metrics were chosen with knowledge of the 2023 events. This
+  demonstrates a methodology on historical data. It is not an out-of-sample
+  discovery, and I don't present it as one.
+- The FDIC API serves current values, including post-2022 amendments, so the
+  freeze approximates the mid-2022 view rather than reproducing it exactly.
+- Three failures and one voluntary liquidation is not a sample. It's a case study,
+  and the page is titled accordingly.
+- Quarterly data sees the setup, not the run. SVB went from stressed to gone in
+  days; no quarterly screen catches that speed.
+- Peer bands are size-only. The over-$100B band puts SVB next to JPMorgan, which
+  flatters nobody's comparison. Business-model peer groups are the first upgrade
+  I'd make.
+- The composite is an unweighted average. With three labels, fitting weights is
+  how you lie to yourself, so I didn't.
+- Uninsured-deposit figures are the banks' own reported estimates.
 
 ## How to run
 
@@ -87,40 +84,26 @@ Copy `.env.example` to `.env` and fill in your keys — nothing secret is commit
 
 ## What the tests caught
 
-_I log real data-quality catches here as they happen. Bank data will not be clean._
+Two findings I'm keeping visible because they're the best argument for testing
+data, not just code.
 
-- **2026-07-03 — "Failed" banks that are alive and enormous.** While stress-testing
-  the failure labels I found five currently active banks — Citibank and Bank of
-  America among them — marked as failed. The FDIC endpoint is really "failures *and
-  assistance*": it includes open-bank ASSISTANCE events (Citibank 2008, FirstBank
-  Puerto Rico 1981) alongside true failures. My `is_failed` flag now requires
-  `resolution_type = 'FAILURE'`. Without this, the 2023 backtest labels — and the
-  rule that operating banks are never described as failed — would both have broken.
+The FDIC's failures endpoint includes more than failures. It also carries
+open-bank assistance records, which meant my first pass at a failure label briefly
+marked Citibank and Bank of America as failed banks. The fix requires an actual
+FAILURE resolution type, and a test now enforces it. Government data has semantics,
+and the semantics are not always what the endpoint name says.
 
-- **2026-07-03 — Insured filers that aren't banks.** A dbt relationship test failed
-  on 123 bank-quarters whose certificate has no institutions record. They're real:
-  Bank of China's US branch, Depository Trust Co, and four other insured non-bank
-  filers report financials but aren't chartered US banks. The analytical universe is
-  now defined as "institutions in the FDIC registry" — the raw layer keeps everything,
-  the fact model applies the rule.
+Winsorization saturates on zero-inflated ratios. Most smaller banks report zero
+brokered deposits, which collapses the MAD and makes any nonzero bank's z-score
+explode. The clamp at plus or minus five catches this, but 16% of brokered-share
+rows sit exactly at the cap, which quietly erases differences between the banks
+you most want to compare. The composite keeps the clamped score for stability, the
+drill-down keeps an unclamped column for resolution, and the limitation is written
+down instead of discovered later.
 
-- **2026-07-03 — A z-score cap that erased the differences it was built to show.**
-  I winsorize peer z-scores at ±5 so a single wild value can't dominate the
-  composite — standard practice, but I checked what it does on my actual data:
-  16% of brokered-deposit-share observations sit at exactly +5, because a third of
-  $1–10B banks hold zero brokered deposits, which crushes the band's MAD and makes
-  anything above ~18% share saturate. A 20%-brokered bank and a 99%-brokered bank
-  were scoring identically. The composite keeps the cap (stability is the point);
-  I added an unclamped z column so drill-downs keep their resolution, and the
-  saturation is documented as a known limitation of the method.
-
-- **2026-07-03 — NULL certificate numbers in Depression-era failure records.** My
-  upsert guard rejects batches with duplicate keys, and the very first `/failures`
-  load tripped it: 53 collisions on `(CERT, FAILDATE)`. The cause is 1930s failure
-  records with no certificate number — six different banks all "failed" on
-  1936-12-21 with `CERT` null. The fix: key failure records on the API's own `ID`
-  field, which is unique on all 4,115 rows. The lesson I'm keeping: never assume a
-  natural key holds across ninety years of records.
+The full running log — including NULL certificate numbers on Depression-era
+failure records and insured filers that aren't chartered banks — lives on the
+dashboard's data-quality page and in the dbt model docs.
 
 ## Decisions
 
@@ -134,8 +117,8 @@ Why I made the architecture calls I made, newest first.
   on every refresh, and MotherDuck stays the warehouse the build reads at CI time.
   Before committing to this I verified interactivity survives a static build: a
   dropdown driving a parameterized query re-filters a table on the statically-served
-  production bundle, with queries running client-side via DuckDB-WASM (see
-  `dashboard/pages/static-build-check.md`). The build is ~87 MB — only ~428 KB of it
+  production bundle, with queries running client-side via DuckDB-WASM (verified with
+  a scratch page before the real pages replaced it). The build is ~87 MB — only ~428 KB of it
   is query-result data, the rest is app JS including DuckDB-WASM — comfortably within
   GitHub Pages limits.
 

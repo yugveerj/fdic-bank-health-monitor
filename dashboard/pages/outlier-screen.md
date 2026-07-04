@@ -2,13 +2,13 @@
 title: Outlier screen
 ---
 
-<!-- TODO(revise): framing paragraph in my words — what this screen is and is not. -->
+Same method as the case study, current quarter, live banks. So the language here is
+deliberately boring. A high <abbr title="The average of six risk-signed z-scores. Higher means the bank's funding, growth, and balance-sheet mix sit further from its peer group, in the direction that history says to watch.">composite</abbr> means one thing: this bank's numbers sit
+unusually far from its size group on six specific metrics. That's a reason to read
+the bank profile page. It is not a prediction.
 
-Each currently active bank's composite score is the mean of six risk-signed,
-peer-relative robust z-scores (funding mix, securities exposure, growth, margin
-trend, capital). Positive means further from the peer median in the directions
-the screen watches. Method details: the metric map in the repository's
-`docs/backtest_method.md`, lineage in [model docs](https://yugveerj.github.io/fdic-bank-health-monitor/dbt-docs/).
+Method details: the metric map in the repository's `docs/backtest_method.md`,
+lineage in [model docs](https://yugveerj.github.io/fdic-bank-health-monitor/dbt-docs/).
 
 ```sql latest
 select max(report_date) as latest_quarter from fdic.mart_outlier_flags
@@ -68,7 +68,5 @@ in-scope history.
 
 ---
 
-**Peer-relative statistics, not assessments of safety or soundness.** A high
-composite score means a bank's reported ratios sit far from its peer-group median
-in the screen's chosen directions — a statistical statement about public filings,
-not a prediction, rating, or supervisory judgment of any kind.
+**Peer-relative statistics only. Nothing on this page is an assessment of any
+bank's safety or soundness.**

@@ -2,10 +2,9 @@
 title: Data quality & lineage
 ---
 
-<!-- TODO(revise): intro in my words. -->
-
-Where this data comes from, how fresh it is, and what stands between the API and
-the charts.
+How the sausage gets made: sources, tests, lineage, freshness. If you read one
+thing on this page, read what the tests caught. The two best bugs in this project
+were in the data, not the code.
 
 ```sql meta
 select built_at, freshest_quarter, bank_quarters, banks, active_banks

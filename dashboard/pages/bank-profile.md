@@ -2,9 +2,8 @@
 title: Bank profile
 ---
 
-<!-- TODO(revise): page intro in my words. -->
-
-Every reported quarter for a single institution, grouped by metric family.
+Twenty-nine quarters of any bank in the data, grouped into five metric families.
+The story of a bank is usually in the trend, not the level.
 
 ```sql banks
 select cert, bank_name || ' — ' || city || ', ' || state_code as label

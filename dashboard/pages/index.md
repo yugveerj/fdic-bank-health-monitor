@@ -1,12 +1,19 @@
 ---
-title: US Bank Health Monitor
+title: Bank Health Monitor
+description: "Which banks look unusual next to their peers? Every FDIC-insured US bank over one billion in assets, scored against banks of similar size, updated automatically."
+og:
+  image: https://yugveerj.github.io/fdic-bank-health-monitor/og-image.png
 ---
 
-<!-- TODO(revise): one plain-English takeaway sentence per chart, mine. -->
+Which banks look unusual next to their peers?
 
-Quarterly financials for every FDIC-insured bank that reported over $1B in total
-assets in any quarter since 2019 — ingested from the FDIC's public API, modeled
-and tested with dbt, rebuilt automatically on refresh.
+Every quarter this site pulls the financials of every FDIC-insured bank that has
+crossed $1B in assets since 2019 and scores each one against banks of similar size.
+The method gets tested on the only question that matters: would it have flagged the
+banks that failed in 2023? Mostly, yes. One important miss. The case study covers both.
+
+Everything updates itself. Weekly aggregates from the Federal Reserve, quarterly
+filings from the FDIC, no hands on the wheel.
 
 ```sql latest
 select max(report_date) as latest_quarter from fdic.fct_bank_quarters
@@ -29,6 +36,8 @@ where report_date = (select latest_quarter from ${latest})
 <BigValue data={kpis} value=median_roa fmt='#,##0.00"%"' title="Median ROA"/>
 <BigValue data={kpis} value=median_nim fmt='#,##0.00"%"' title="Median NIM"/>
 <BigValue data={kpis} value=median_equity_ratio fmt='pct1' title="Median equity/assets"/>
+
+<small>Hover for definitions: <abbr title="Return on assets. What the bank earned as a share of everything it holds. Around 1% is normal for a healthy bank.">ROA</abbr> · <abbr title="Net interest margin. The gap between what a bank earns on its loans and what it pays on its deposits. For most banks, this is the engine.">NIM</abbr> · <abbr title="The bank's own capital as a share of its balance sheet. A thicker cushion means more room to absorb losses.">equity/assets</abbr></small>
 
 ## Sector balance sheet over time
 
@@ -74,8 +83,9 @@ group by report_date order by report_date
 
 ## The weekly pulse (Federal Reserve H.8)
 
-Between quarterly filings, these system-wide weekly aggregates are the freshest
-signal available — seasonally adjusted, in billions.
+The weekly pulse comes from the Fed's H.8 release: deposits, bank credit, business
+lending, and total assets across all US commercial banks. It's the freshest public
+read on the sector between quarterly filings.
 
 ```sql h8
 select obs_date, series_title, value_billions

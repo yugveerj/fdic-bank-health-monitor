@@ -2,10 +2,9 @@
 title: Peer-group explorer
 ---
 
-<!-- TODO(revise): page intro in my words. -->
-
-Pick a peer band and a metric to see the latest quarter's distribution, with the
-peer median and decile boundaries marked.
+Pick a <abbr title="Banks are only compared against banks of similar size: $1–10B, $10–100B, and over $100B in assets.">size band</abbr> and a metric. The page shows the full distribution and who sits in
+the tails. It's worth a few minutes here before reading anyone's <abbr title="How far a bank sits from the middle of its size group, measured so that a few extreme banks can't distort the yardstick (median and MAD instead of mean and standard deviation). Zero is typical. Two is unusual. Scores are capped at plus or minus five.">z-score</abbr>, because
+this is where you calibrate what normal looks like. Normal is wider than you think.
 
 ```sql latest
 select max(report_date) as latest_quarter from fdic.fct_bank_quarters
