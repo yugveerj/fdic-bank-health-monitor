@@ -94,7 +94,23 @@ where p.report_date = (select latest_quarter from ${latest})
   and b.is_active
 ```
 
+```sql model_metric_available
+select count(*) as n from fdic.mart_model_percentiles
+where metric = '${inputs.metric.value}'
+```
+
+{#if (model_metric_available[0]?.n ?? 0) > 0}
+
 <Histogram data={model_selection} x=value title="Distribution of {inputs.metric.value} within {inputs.model.value}"/>
+
+{:else}
+
+The business-model groups are built from balance-sheet structure and return
+ratios, so the year-over-year growth, net charge-off, and cost-of-funds metrics
+aren't computed here — those stay on the size bands above. Pick another metric
+to see its business-model distribution.
+
+{/if}
 
 ---
 
