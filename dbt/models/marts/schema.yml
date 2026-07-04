@@ -122,6 +122,16 @@ models:
         description: Slope of NIM over the trailing 4 quarters (pct points per quarter); null unless all 4 present.
       - name: peer_band
         description: Asset band this quarter — $1B-$10B, $10B-$100B, or >$100B.
+      - name: business_model
+        description: >
+          Rule-based class from three reported ratios, first match wins:
+          fee_custody (loans/assets < 0.20), wholesale_funded (brokered share
+          > 0.25), securities_focused (securities/assets > 0.50), else
+          traditional_lender. Context only; the screen composite uses size bands.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['fee_custody', 'wholesale_funded', 'securities_focused', 'traditional_lender']
       - name: likely_merger_quarter
         description: >
           True when QoQ asset growth exceeds 25% — step-change growth that usually
@@ -161,6 +171,32 @@ models:
           robust_z_unclamped when rank resolution among extremes matters.
       - name: robust_z_unclamped
         description: The same robust z without the ±5 winsorization, for drill-downs and rank analysis among extreme values.
+
+  - name: mart_model_percentiles
+    description: >
+      Grain bank x metric x quarter. Robust peer statistics within business-model
+      groups; a context layer for drill-downs. The screen composite does not read
+      this table.
+    columns:
+      - name: cert
+        description: FDIC certificate number.
+        tests: [not_null]
+      - name: report_date
+        description: Quarter-end report date.
+      - name: business_model
+        description: Class from int_business_models.
+        tests: [not_null]
+      - name: metric
+        description: Metric name from fct_bank_quarters.
+        tests: [not_null]
+      - name: value
+        description: The bank's own value.
+      - name: model_median
+        description: Median across the business-model group, this metric and quarter.
+      - name: model_mad
+        description: Median absolute deviation across the group.
+      - name: robust_z
+        description: Same construction as the size-band z; winsorized to [-5, 5], null when MAD = 0.
 
   - name: mart_outlier_flags
     description: >

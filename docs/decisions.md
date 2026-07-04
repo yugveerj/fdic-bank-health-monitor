@@ -2,6 +2,17 @@
 
 Architecture-level decisions and their full rationales, newest first.
 
+- **2026-07-04** — Business-model peer groups ship as a context layer, not a
+  replacement. Three fixed, documented thresholds classify every bank-quarter
+  (loans/assets < 0.20 is fee-and-custody, brokered share > 0.25 is
+  wholesale-funded, securities/assets > 0.50 is securities-focused, everyone
+  else lends for a living). Rules instead of clustering because every
+  assignment must be explainable in one sentence, and fixed thresholds instead
+  of fitted ones because there is nothing to fit without lying to myself. The
+  outlier composite and the 2023 backtest stay on size bands exactly as
+  published: changing the peer basis under a published result would silently
+  rewrite it.
+
 - **2026-07-03** — Hosting: Evidence static build on GitHub Pages. I originally
   planned on Evidence Cloud's free tier, but it was discontinued. The managed
   product is now Evidence Studio at $15/user/mo, and it drops support for

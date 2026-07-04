@@ -22,12 +22,14 @@ order by f.report_date
 ```
 
 ```sql profile_header
-select bank_name, max(report_date) as latest, count(*) as quarters
+select bank_name, max(report_date) as latest, count(*) as quarters,
+       max_by(business_model, report_date) as business_model
 from ${bank_history} group by bank_name
 ```
 
 <BigValue data={profile_header} value=bank_name title="Institution"/>
 <BigValue data={profile_header} value=quarters title="Quarters reported"/>
+<BigValue data={profile_header} value=business_model title="Business model (rule-based)"/>
 
 ## Balance sheet
 

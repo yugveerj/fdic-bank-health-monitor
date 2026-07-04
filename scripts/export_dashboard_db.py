@@ -25,6 +25,7 @@ TABLES = {
     "fct_bank_quarters": "fct_bank_quarters",
     "mart_outlier_flags": "mart_outlier_flags",
     "mart_peer_percentiles": "mart_peer_percentiles",
+    "mart_model_percentiles": "mart_model_percentiles",
     "fred_h8": "stg_fred__h8",
 }
 

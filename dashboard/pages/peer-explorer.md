@@ -70,6 +70,32 @@ order by value desc
     <Column id=decile/>
 </DataTable>
 
+## Same metric, business-model peers
+
+Size bands answer "unusual for a bank this big." This section answers "unusual
+for a bank that runs this kind of business" — four rule-based groups from three
+reported ratios: traditional lenders, wholesale-funded, securities-focused, and
+fee-and-custody banks. The outlier screen's composite stays on size bands; this
+view is context.
+
+```sql models
+select distinct business_model from fdic.mart_model_percentiles order by business_model
+```
+
+<Dropdown data={models} name=model value=business_model title="Business model" defaultValue="traditional_lender"/>
+
+```sql model_selection
+select p.cert, b.bank_name, p.value, p.robust_z
+from fdic.mart_model_percentiles p
+join fdic.dim_banks b using (cert)
+where p.report_date = (select latest_quarter from ${latest})
+  and p.business_model = '${inputs.model.value}'
+  and p.metric = '${inputs.metric.value}'
+  and b.is_active
+```
+
+<Histogram data={model_selection} x=value title="Distribution of {inputs.metric.value} within {inputs.model.value}"/>
+
 ---
 
 High or low values here are statements about position in a distribution,
