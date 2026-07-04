@@ -20,9 +20,23 @@ _Diagram coming with the automation work._
 
 ## Results
 
-_The centerpiece will be a backtest: whether a peer-group outlier screen, frozen to
-data available in mid-2022, would have flagged the 2023 bank failures. Results table
-lands here when it's reproducible end to end._
+Where the banks at the center of the 2023 banking stress ranked on my composite
+screen, frozen at 2022-06-30 — nine months before the first failure. Reproduce
+everything with `uv run python -m scripts.run_backtest` (it also *proves* the
+freeze: a physically truncated rebuild must match the production mart exactly).
+
+| Bank | Band | Rank in band | Band pctile | Overall (n=989) |
+|---|---|---|---|---|
+| Silvergate Bank (liquidated Mar 2023) | $10B–$100B | 2 / 128 | 99.2 | 8 |
+| Silicon Valley Bank (failed Mar 2023) | >$100B | 1 / 35 | 100.0 | 26 |
+| Signature Bank (failed Mar 2023) | >$100B | 2 / 35 | 97.1 | 60 |
+| First Republic Bank (failed May 2023) | >$100B | 8 / 35 | 79.4 | 355 |
+| Republic Bank (failed Apr 2024, out-of-window) | $1B–$10B | 86 / 826 | 89.7 | 95 |
+
+Two honesty notes govern this table: the metrics were chosen with knowledge of
+the 2023 events (a methodology demonstration, not an out-of-sample discovery),
+and the FDIC API serves current values that may include post-2022 amendments —
+the freeze is approximate. Full methodology: [docs/backtest_method.md](docs/backtest_method.md).
 
 ## Limitations
 
@@ -39,6 +53,7 @@ uv run python -m ingestion.run_all             # full ingestion (idempotent, saf
 cd dbt && DBT_PROFILES_DIR=. uv run dbt build  # models + tests (local DuckDB by default)
 cd .. && uv run python -m scripts.export_dashboard_db   # marts -> dashboard source
 cd dashboard && npm run sources && npm run dev # local dashboard preview
+uv run python -m scripts.run_backtest          # reproduce the 2023 backtest + proof
 ```
 
 In CI the same steps run against MotherDuck (`DBT_TARGET=md`); pushes rebuild the
