@@ -78,7 +78,7 @@ order by ord, "check"
 ## What the tests caught
 
 Real findings, each of which changed the pipeline. The full stories live in the
-repository's [data-quality log](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/data_quality_log.md).
+repository's [data-quality notes](https://github.com/yugveerj/fdic-bank-health-monitor/blob/main/docs/data_quality.md).
 
 - Depression-era failure records carry no certificate number, so failure rows
   are keyed on the API's own ID instead of the obvious natural key.

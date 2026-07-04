@@ -1,32 +1,45 @@
 # Backtest methodology
 
-<!-- TODO(revise): this document is written to be defensible line by line — I own
-     every sentence of it and should be able to reproduce the reasoning cold. -->
-
 ## The question
 
-Would a peer-relative outlier screen, built on FDIC public data and frozen to
-what was reportable at 2022-06-30, have flagged the banks at the center of the
-2023 banking stress? This is a methodology demonstration on historical data —
-see the limitations, which are load-bearing.
+Would a peer-relative outlier screen, built on nothing but FDIC public data and
+frozen to what was reportable at June 30, 2022, have flagged the banks at the
+center of the 2023 banking stress? That's nine months before the first of them
+failed. This document explains how the test works, where every number comes
+from, and what the result does and does not mean. The short version of that
+last part: the metrics were chosen knowing how 2023 ended, so this demonstrates
+a screening method on history rather than discovering anything, and the
+limitations section below is load-bearing.
 
-## The freeze, and its proof
+## The freeze, and how it's proven rather than promised
 
-One command reproduces everything: `uv run python -m scripts.run_backtest`.
+Everything reproduces from a single command:
 
-It rebuilds the entire model pipeline in a separate database from raw financials
-physically truncated at the as-of date (belt: the staging model also takes an
-`as_of` variable; braces: the raw copy simply doesn't contain later rows), then
-asserts that the frozen build's composite scores are **identical** to the
-production mart's rows at that date — 989 of 989 banks. That equivalence is the
-point: it demonstrates that every screen metric is computed only from
-backward-looking data, so the "as-of" view is real, not aspirational.
+    uv run python -m scripts.run_backtest
 
-## Metric sources
+The command rebuilds the entire model pipeline in a separate database whose raw
+financials are physically truncated at the as-of date. As a second layer, the
+staging model takes an `as_of` variable that filters in-model, so even if the
+copy step regressed the models would still exclude later data. The script then
+asserts two things. First, that the frozen build's composite scores are
+identical to the production mart's rows at that date, all 989 banks. This
+matters because every screen metric is built from trailing windows; if any of
+them leaked future data, the physically truncated rebuild could not match a
+mart computed over the full panel. The equivalence turns "the screen only looks
+backward" from a claim into a checked property. Second, the script asserts
+that the labeled banks land at their published ranks, which guards against a
+subtler failure where both sides of the equivalence drift together. A
+fixture-scale version of the whole thing runs on every pull request, with its
+own pinned rank.
 
-Every field code below comes from the FDIC's official dictionaries (saved under
-`docs/fdic_*_properties.yaml`) and was confirmed against a live `/financials`
-response on 2026-07-03. Dollar levels are thousands; ratio fields are percent.
+## Where the data comes from
+
+Every field code below comes from the FDIC's official data dictionaries, which
+are saved under `docs/` as `fdic_*_properties.yaml`, and each code was
+confirmed against a live API response before first use. Dollar-denominated
+fields arrive in thousands. Ratio fields are percentages. Two fields that look
+quarterly are actually year-to-date (net income and net charge-offs), which
+matters if you ever de-cumulate them.
 
 | Metric | Source field(s) | Notes |
 |---|---|---|
@@ -42,7 +55,7 @@ response on 2026-07-03. Dollar levels are thousands; ratio fields are percent.
 | Equity / assets | `EQR` (+ `EQ` level) | |
 | Risk-based capital | `RBCRWAJ` (total), `RBCT1CER` (CET1), `RBC1AAJ` (leverage) | |
 | Brokered-deposit share | derived: `BRO / DEP` | `BRO` is the level, thousands |
-| Uninsured-deposit share | derived: `DEPUNINS / DEP` | FDIC's own estimate; `DEPUNA` (domestic-offices variant) also ingested |
+| Uninsured-deposit share | derived: `DEPUNINS / DEP` | the FDIC's own estimate; `DEPUNA` (domestic-offices variant) also ingested |
 | Cost of funds | `INTEXPY` | interest expense / earning assets |
 | Noncurrent loans ratio | `NCLNLSR` (+ `NCLNLS` level) | |
 | Net charge-offs ratio | `NTLNLSCOR` (+ `NTLNLS` level) | `NTLNLS` is year-to-date |
@@ -51,44 +64,54 @@ response on 2026-07-03. Dollar levels are thousands; ratio fields are percent.
 | YoY / 3-yr asset growth | derived from `ASSET` | quarter-index joins in dbt |
 | YoY deposit growth | derived from `DEP` | computed in dbt |
 
-## Screen metrics and risk directions
+## The screen
 
-Six metrics, fixed before the backtest was built and not adjusted afterward —
-wherever a labeled bank lands, that is what gets reported. `+` means a higher
-value scores as riskier.
+Six metrics, fixed before the backtest was built and never adjusted afterward.
+Wherever a labeled bank lands is what gets reported. Each metric carries a
+direction: a plus means a higher value scores as riskier.
 
-| Metric | Direction | One-sentence rationale |
+| Metric | Direction | Why |
 |---|---|---|
 | Uninsured-deposit share | + | Deposits above the insurance limit are the ones that can leave in an afternoon, so a funding base dominated by them is structurally runnable. |
-| Brokered-deposit share | + | Brokered money is rate-shopping money — it arrives for yield and leaves for yield, with no relationship holding it in place. |
-| Securities / assets | + | In a rising-rate environment a large securities book is embedded duration: unrealized losses that turn real exactly when deposits need paying out — the "aren't securities safe?" answer is *not when rates just rose and you must sell them*. |
-| 3-yr asset growth | + | Balance sheets that tripled in three years have risk controls, funding relationships, and asset quality that were built for a much smaller bank. |
-| NIM 4-quarter trend | − | A margin that is deteriorating quarter after quarter means the bank is being squeezed between its asset yields and its funding costs. |
-| Equity / assets | − | Capital is the distance between a bad quarter and insolvency; less of it means less room for anything to go wrong. |
+| Brokered-deposit share | + | Brokered money is rate-shopping money. It arrives for yield and leaves for yield, with no relationship holding it in place. |
+| Securities / assets | + | In a rising-rate environment a large securities book is embedded duration: unrealized losses that turn real exactly when deposits need paying out. The "aren't securities the safe assets?" answer is not when rates just rose and you must sell them. |
+| 3-yr asset growth | + | A balance sheet that tripled in three years has risk controls, funding relationships, and asset quality that were built for a much smaller bank. |
+| NIM 4-quarter trend | − | A margin deteriorating quarter after quarter means the bank is being squeezed between its asset yields and its funding costs. |
+| Equity / assets | − | Capital is the distance between a bad quarter and insolvency. Less of it means less room for anything to go wrong. |
 
-**Composite** = mean of the available risk-signed robust z-scores
-(`(value − peer_median) / (1.4826 × MAD)`, winsorized at ±5, MAD = 0 → null),
-computed within the quarter's asset band ($1–10B, $10–100B, >$100B).
-`n_screen_metrics` records how many of the six fed each composite.
+Each metric is turned into a robust z-score within the bank's size band for
+that quarter: the value minus the band median, divided by 1.4826 times the
+median absolute deviation, winsorized at plus or minus five, and set to null
+when the MAD is zero rather than dividing by it. Median and MAD instead of mean
+and standard deviation because bank ratios have heavy tails, and a single
+extreme peer shouldn't be able to mask or manufacture outliers. The bands are
+one-to-ten billion, ten-to-a-hundred billion, and over a hundred billion in
+assets, recomputed each quarter.
 
-The spec allowed considering an unrealized-loss/AOCI field as a seventh metric;
-I did not pursue it — the metric set was frozen before results were examined,
-and it stays frozen.
+The composite is the unweighted mean of whichever risk-signed z-scores are
+available for that bank-quarter, with a companion column recording how many of
+the six fed it. Unweighted is a deliberate choice: with three or four labeled
+events there is nothing to fit weights against honestly. The specification
+allowed considering an unrealized-loss field as a seventh metric; I didn't
+pursue it, because the set was frozen before results were examined and it
+stays frozen.
 
-## Labels
+## The labels
 
-- **2023 label set**: Silicon Valley Bank (24735), Signature Bank NY (57053),
-  First Republic Bank (59017) — the three 2023 failures above the $1B scope —
-  plus Silvergate Bank (27330), a voluntary liquidation absent from FDIC failure
-  data by design, labeled separately.
-- **Excluded, stated openly**: Heartland Tri-State (~$139M) and Citizens Bank,
-  Sac City (~$66M) failed in 2023 far below the scope threshold; the screen
-  never sees them.
-- **Out-of-window**: Republic Bank, Philadelphia (27332) failed in April 2024.
-  Not part of the label set; its freeze-date result is reported as-is as a
-  robustness observation.
+The 2023 label set is the three failures large enough for the one-billion
+scope, Silicon Valley Bank (24735), Signature Bank of New York (57053), and
+First Republic Bank (59017), plus Silvergate Bank (27330), which wound down
+voluntarily in March 2023 and therefore never appears in FDIC failure data. It
+gets labeled separately rather than silently mixed in. Two 2023 failures fall
+far below scope, Heartland Tri-State at roughly $139M and Citizens Bank of Sac
+City at roughly $66M; the case-study page says so instead of dropping them
+quietly. Republic First of Philadelphia (27332) failed in April 2024, ten
+months outside the window, and is reported as an out-of-window check rather
+than as part of the label set.
 
-## Results at the 2022-06-30 freeze
+## The result
+
+At the June 2022 freeze, against 989 scored banks:
 
 | Bank | Band | Rank in band | Band pctile | Overall (n=989) | Overall pctile |
 |---|---|---|---|---|---|
@@ -98,41 +121,58 @@ and it stays frozen.
 | First Republic Bank | >$100B | 8 / 35 | 79.4 | 355 | 64.2 |
 | Republic Bank (2024, out-of-window) | $1B–$10B | 86 / 826 | 89.7 | 95 | 90.5 |
 
-With only 3–4 labeled events, these are presented as ranks and distribution
-positions; capture-rate or lift statistics would be meaningless at this n and
-are deliberately absent.
+With only three or four labeled events, these are presented as ranks and
+distribution positions. Capture rates and lift statistics would be meaningless
+at this sample size, so they are deliberately absent.
 
-<!-- TODO(revise): the interpretation of these numbers — especially First
-     Republic's weak in-band signal and what the screen structurally cannot see
-     about it — is my analysis to write. -->
+First Republic is the miss, and the reason is instructive rather than
+embarrassing. The screen's rate-risk proxy is securities as a share of assets,
+which is the Silicon Valley Bank profile. First Republic parked its rate risk
+where these six metrics barely look: long fixed-rate jumbo mortgages, funded
+by wealthy clients whose balances sat far above the insurance cap. Its
+securities component actually scored below its band median at the freeze. What
+fired for it was growth, uninsured share, and margin trend, enough for 8th of
+35 but nothing like the top-of-band signal the others gave. A screen that
+equal-weights six ratios doesn't get to catch everything.
 
-## False positives
+## The false positives
 
-`docs/backtest/false_positive_sample.csv` holds the top-decile banks that did
-not fail. Recurring shapes in the sample: brokered-share z pinned at +5 (the
-winsorization saturation documented in the README), composites resting on 4 of
-6 metrics, and acquisition-driven growth (`likely_merger_quarter` flags in the
-full ranked table separate step-change growth from organic SVB-style deposit
-inflows). One disambiguation: the sample contains a *different* Signature Bank
-(cert 58264, $1B–$10B) than the failed New York institution (57053).
+A screen is only honest if you look at what it flagged that didn't fail. Of
+the hundred banks in the top decile of the frozen composite, taking the 90th
+percentile within each band with ties included, 89 are still operating.
+Three of the eleven that aren't are the labeled cases above, and the other
+eight were acquired, not failed. The case-study page examines five of the
+89 in detail, chosen after checking the FDIC's history endpoint for real
+acquisition records: two genuine growth artifacts whose three-year growth came
+from buying other banks (First Bank & Trust of Lubbock, which absorbed the
+$1.85B AIMBank in late 2020, and SmartBank of Pigeon Forge, which absorbed
+Sevier County Bank in 2021), and three banks whose unusual shape is simply
+their business model, a wholesale-funded specialty lender, a brokerage bank
+growing on affiliate sweep deposits, and a municipal-deposit bank whose
+uninsured funding is collateralized in practice. The exhibits live in
+`docs/backtest/` as CSVs and reproduce with the command above.
 
-<!-- TODO(revise): the written false-positive analysis — what the screen saw in
-     ~5 of these banks and why they didn't fail — is mine. -->
+One naming trap for anyone reading the exhibits: the sample contains a
+Signature Bank (FDIC cert 58264, a bank in the one-to-ten-billion band) that is
+a different institution from the Signature Bank of New York (cert 57053) that
+failed. Certificate numbers are the identity; names repeat.
 
-## Limitations (load-bearing — these appear wherever results do)
+## Limitations
 
-1. **The screen was designed with hindsight.** The six metrics were chosen
-   knowing how 2023 unfolded. This backtest demonstrates that a plausible
-   screening methodology *would have ranked* these banks highly; it is not an
-   out-of-sample discovery and cannot claim predictive validity.
-2. **The freeze is approximate.** The FDIC API serves current values, which may
-   include amendments filed after mid-2022. The as-of filter reconstructs the
-   mid-2022 view from today's data — a true point-in-time vintage would require
-   archived submissions I don't have.
-3. **Winsorization saturates zero-inflated metrics** (brokered share above all):
-   sixteen percent of brokered-share observations share the +5 boundary, which
-   flattens distinctions among the most extreme banks and inflates their
-   composites' similarity.
-4. **The 3-year growth metric excludes recent scope-entrants** (it needs 12
-   quarters of >$1B history), so roughly half of 2022-Q2 composites rest on
-   five metrics, not six.
+The two that govern everything: I picked these six metrics knowing how 2023
+ended, so this is a test of whether a simple peer screen can express a known
+story in data available at the time, not a claim that I would have called it
+in advance. And the FDIC's API serves current values, including amendments
+filed after mid-2022, so the freeze reconstructs the mid-2022 view closely but
+not as a true point-in-time vintage. Both statements appear wherever results
+do, on the case-study page and in the README, not just here.
+
+Two more worth knowing before quoting any number. Winsorization saturates on
+zero-inflated metrics: about 16% of brokered-share observations sit exactly at
+the +5 cap because most smaller banks hold no brokered deposits at all, which
+flattens distinctions among exactly the banks a reader most wants to compare
+(the drill-down keeps an unclamped column for this reason). And the three-year
+growth metric requires twelve quarters of in-scope history, so recent
+threshold-crossers have no value for it and roughly half of the 2022-Q2
+composites rest on five metrics rather than six. The companion count column
+makes that visible wherever composites appear.

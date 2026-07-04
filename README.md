@@ -107,7 +107,8 @@ banks you most want to compare. The composite keeps the clamped score for
 stability, the drill-down keeps an unclamped column for resolution, and the
 limitation is written down instead of discovered later.
 
-[Full data-quality log](docs/data_quality_log.md).
+The full set of findings, along with the verification work behind the ingested
+data, is in [docs/data_quality.md](docs/data_quality.md).
 
 ## Decisions
 
