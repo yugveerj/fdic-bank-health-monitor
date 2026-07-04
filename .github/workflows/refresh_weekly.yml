@@ -1,0 +1,37 @@
+# Weekly: pull fresh FRED H.8 observations, then rebuild and deploy the site.
+# H.8 publishes Friday afternoons US time; this runs Saturdays 02:15 UTC.
+name: Weekly refresh
+
+on:
+  schedule:
+    - cron: "15 2 * * 6"
+  workflow_dispatch:
+
+jobs:
+  ingest-fred:
+    runs-on: ubuntu-latest
+    env:
+      MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      FDIC_DB_PATH: "md:fdic_bank_health"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        # SHA-pinned: setup-uv publishes no moving major tag
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Install Python project
+        run: uv sync --locked
+
+      - name: Ingest FRED H.8 into MotherDuck
+        run: uv run python -m ingestion.fred_h8
+
+  deploy:
+    needs: ingest-fred
+    uses: ./.github/workflows/deploy_dashboard.yml
+    secrets: inherit
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
