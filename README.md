@@ -61,9 +61,10 @@ which makes the freeze approximate rather than exact. Full methodology:
   and the page is titled accordingly.
 - Quarterly data sees the setup, not the run. SVB went from stressed to gone in
   days; no quarterly screen catches that speed.
-- Peer bands are size-only. The over-$100B band puts SVB next to JPMorgan, which
-  flatters nobody's comparison. Business-model peer groups are the first upgrade
-  I'd make.
+- The screen's composite compares within size bands only, and the over-$100B
+  band puts SVB next to JPMorgan, which flatters nobody's comparison. A
+  business-model peer view now exists on the explorer as context; the composite
+  stays on size bands on purpose, so the published backtest ranks never move.
 - The composite is an unweighted average. With three labels, fitting weights is
   how you lie to yourself, so I didn't.
 - Uninsured-deposit figures are the banks' own reported estimates.
@@ -115,3 +116,5 @@ One line per decision; full rationales in [docs/decisions.md](docs/decisions.md)
 - **2026-07-03** — Python pinned to 3.13 (dbt-core blocks 3.14 until dbt v2.0).
 - **2026-07-03** — Third-party GitHub Actions pinned by commit SHA (setup-uv
   publishes no moving major tag).
+- **2026-07-04** — Business-model peer groups ship as a context layer; the
+  composite and backtest stay on size bands so published results never move.
