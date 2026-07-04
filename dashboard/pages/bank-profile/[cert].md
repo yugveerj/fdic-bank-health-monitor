@@ -1,23 +1,14 @@
 ---
-title: Bank profile
+breadcrumb: "select bank_name as breadcrumb from fdic.dim_banks where cert = ${params.cert}"
 ---
 
-Twenty-nine quarters of any bank in the data, grouped into five metric families.
-The story of a bank is usually in the trend, not the level.
-
-```sql banks
-select cert, bank_name || ' — ' || city || ', ' || state_code as label
-from fdic.dim_banks
-order by bank_name
-```
-
-<Dropdown data={banks} name=bank value=cert label=label title="Institution (closed banks included)" defaultValue={628}/>
+[← All banks](/bank-profile)
 
 ```sql bank_history
 select f.*, b.bank_name
 from fdic.fct_bank_quarters f
 join fdic.dim_banks b using (cert)
-where f.cert = ${inputs.bank.value}
+where f.cert = ${params.cert}
 order by f.report_date
 ```
 
@@ -37,12 +28,15 @@ from ${bank_history} group by bank_name
 <BigValue data={profile_header} value=quarters title="Quarters reported"/>
 <BigValue data={profile_header} value=business_model title="Business model (rule-based)"/>
 
+Twenty-nine quarters at most, grouped into five metric families. The story of a
+bank is usually in the trend, not the level.
+
 ## Screen history
 
 ```sql screen_history
 select report_date, composite_score, n_screen_metrics
 from fdic.mart_outlier_flags
-where cert = ${inputs.bank.value}
+where cert = ${params.cert}
 order by report_date
 ```
 
