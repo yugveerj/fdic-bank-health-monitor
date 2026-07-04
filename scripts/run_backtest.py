@@ -50,6 +50,14 @@ FROZEN_RANKS = {
 }
 FROZEN_N_OVERALL = 989
 
+# The CI fixture's own golden ranks (not a published number). Only SVB among the
+# labeled banks is in the fixture's institutions/financials; its three peer bands
+# now hold five real banks each, so this pins the median/MAD/winsorization/ranking
+# math end to end on every fixture backtest. Update these if the fixture changes.
+FIXTURE_RANKS = {24735: (">$100B", 1, 5, 1)}
+FIXTURE_N_OVERALL = 15
+FIXTURE_DB_NAME = "ci_warehouse.duckdb"
+
 
 def build_frozen_warehouse() -> None:
     BACKTEST_DB.unlink(missing_ok=True)
@@ -192,18 +200,7 @@ def emit_exhibits() -> None:
         con.close()
 
 
-def assert_frozen_ranks() -> None:
-    """The labeled banks' ranks must match the published frozen values.
-
-    prove_equivalence only shows the frozen build agrees with production; it cannot
-    catch a change to the composite formula, the metric set, or the sign directions,
-    because both sides move together. This pins the actual output numbers. Skipped
-    when FDIC_PROD_DB is overridden (the CI fixture or an alternate warehouse), where
-    the universe — and therefore the ranks — legitimately differ.
-    """
-    if os.environ.get("FDIC_PROD_DB"):
-        log.info("frozen-rank assertion skipped: FDIC_PROD_DB overrides the production warehouse")
-        return
+def _assert_ranks(expected: dict, n_overall_expected: int, context: str) -> None:
     con = duckdb.connect(str(BACKTEST_DB), read_only=True)
     try:
         rows = con.execute(
@@ -217,28 +214,43 @@ def assert_frozen_ranks() -> None:
                 FROM main.mart_outlier_flags WHERE report_date = DATE '{AS_OF}'
             )
             SELECT cert, peer_band, rank_in_band, band_size, rank_overall, n_overall
-            FROM ranked WHERE cert IN ({",".join(str(c) for c in FROZEN_RANKS)})
+            FROM ranked WHERE cert IN ({",".join(str(c) for c in expected)})
             """
         ).fetchall()
         found = {r[0]: r[1:] for r in rows}
         problems = []
-        for cert, expected in FROZEN_RANKS.items():
+        for cert, exp in expected.items():
             if cert not in found:
-                problems.append(f"cert {cert} absent from the frozen composite")
+                problems.append(f"cert {cert} absent from the composite")
                 continue
             band, rib, bsize, roverall, n_overall = found[cert]
-            if (band, rib, bsize, roverall) != expected or n_overall != FROZEN_N_OVERALL:
+            if (band, rib, bsize, roverall) != exp or n_overall != n_overall_expected:
                 problems.append(
                     f"cert {cert}: got {band} {rib}/{bsize} overall {roverall}/{n_overall}; "
-                    f"expected {expected[0]} {expected[1]}/{expected[2]} overall {expected[3]}/{FROZEN_N_OVERALL}"
+                    f"expected {exp[0]} {exp[1]}/{exp[2]} overall {exp[3]}/{n_overall_expected}"
                 )
         if problems:
-            log.error("FROZEN RANKS CHANGED — the published backtest results moved:\n  %s",
-                      "\n  ".join(problems))
+            log.error("%s RANKS CHANGED:\n  %s", context.upper(), "\n  ".join(problems))
             raise SystemExit(1)
-        log.info("frozen ranks verified: all %d labeled banks match the published values", len(FROZEN_RANKS))
+        log.info("%s ranks verified: all %d labeled banks match", context, len(expected))
     finally:
         con.close()
+
+
+def assert_ranks() -> None:
+    """Pin the labeled banks' ranks so a regression in the composite, the metric set,
+    the sign directions, or the median/MAD/winsorization/ranking math fails loudly —
+    something prove_equivalence cannot catch, since it moves the frozen build and
+    production together. On the canonical production warehouse these are the frozen
+    published values; on the CI fixture they are the fixture's own golden values,
+    which still exercise the full statistical path over five-member peer bands.
+    """
+    if PROD_DB.name == FIXTURE_DB_NAME:
+        _assert_ranks(FIXTURE_RANKS, FIXTURE_N_OVERALL, "fixture")
+    elif os.environ.get("FDIC_PROD_DB"):
+        log.info("rank assertion skipped: FDIC_PROD_DB points at a non-fixture warehouse")
+    else:
+        _assert_ranks(FROZEN_RANKS, FROZEN_N_OVERALL, "frozen production")
 
 
 def main() -> int:
@@ -249,7 +261,7 @@ def main() -> int:
     build_frozen_warehouse()
     prove_equivalence()
     emit_exhibits()
-    assert_frozen_ranks()
+    assert_ranks()
     return 0
 
 
