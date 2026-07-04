@@ -26,9 +26,8 @@ def connect(db_path: str | None = None) -> duckdb.DuckDBPyConnection:
         # attaching a nonexistent MotherDuck database fails — create it first
         db_name = target[3:].split("?")[0]
         if db_name:
-            boot = duckdb.connect("md:")
-            boot.execute(f'CREATE DATABASE IF NOT EXISTS "{db_name}"')
-            boot.close()
+            with duckdb.connect("md:") as boot:
+                boot.execute(f'CREATE DATABASE IF NOT EXISTS "{db_name}"')
     else:
         Path(target).parent.mkdir(parents=True, exist_ok=True)
     return duckdb.connect(target)
@@ -53,13 +52,24 @@ def upsert(
         raise ValueError(f"duplicate keys within incoming batch for {table}")
 
     con.register("_incoming", df)
-    con.execute(f'CREATE TABLE IF NOT EXISTS "{table}" AS SELECT * FROM _incoming WHERE 1=0')
-    predicate = " AND ".join(f't."{k}" = i."{k}"' for k in keys)
-    con.execute(
-        f'DELETE FROM "{table}" t WHERE EXISTS (SELECT 1 FROM _incoming i WHERE {predicate})'
-    )
-    con.execute(f'INSERT INTO "{table}" SELECT * FROM _incoming')
-    con.unregister("_incoming")
+    try:
+        con.execute(f'CREATE TABLE IF NOT EXISTS "{table}" AS SELECT * FROM _incoming WHERE 1=0')
+        predicate = " AND ".join(f't."{k}" = i."{k}"' for k in keys)
+        # delete-then-insert must be atomic: a failure between the two (network
+        # drop to MotherDuck, a type mismatch on insert) would otherwise drop the
+        # keyed rows with nothing to replace them, breaking the re-run guarantee.
+        con.execute("BEGIN TRANSACTION")
+        try:
+            con.execute(
+                f'DELETE FROM "{table}" t WHERE EXISTS (SELECT 1 FROM _incoming i WHERE {predicate})'
+            )
+            con.execute(f'INSERT INTO "{table}" SELECT * FROM _incoming')
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
+    finally:
+        con.unregister("_incoming")
     return len(df)
 
 

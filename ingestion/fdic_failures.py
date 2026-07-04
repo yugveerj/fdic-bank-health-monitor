@@ -22,6 +22,10 @@ KEYS = ["ID"]  # not (CERT, FAILDATE): 1930s records have NULL CERT and collide
 
 
 def ingest(client: FdicClient, con) -> int:
+    # sorted on CERT (the endpoint rejects sort_by=ID with a 400 — ID is a field
+    # but not a sortable one); CERT is not a total order (NULL and duplicate certs
+    # exist), so fetch_all's completeness guard and the ID-keyed upsert are what
+    # protect against a boundary drop once this table ever exceeds one page.
     rows = client.fetch_all("/failures", fields=FAILURE_FIELDS, sort_by="CERT")
     df = pd.DataFrame(rows).reindex(columns=FAILURE_FIELDS)
     n = upsert(con, TABLE, df, KEYS)

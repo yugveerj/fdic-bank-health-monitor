@@ -93,8 +93,26 @@ class FdicClient:
                     f"{endpoint}: empty page at offset {offset} but total={total}"
                 )
             rows.extend(page)
-            offset += page_size
+            # advance by rows actually returned, not the requested page size, so a
+            # short non-final page (soft cap / partial result) never skips records
+            offset += len(page)
+        # completeness guard: if the sort key is not a total order (e.g. /failures
+        # sorts on CERT, which has NULL and duplicate values), a tie straddling a
+        # page boundary could drop a row. This turns any such gap into a loud
+        # failure instead of a silent short pull. Overlaps are caught downstream by
+        # the duplicate-key check in db.upsert.
+        if total is not None and len(rows) != total:
+            raise RuntimeError(
+                f"{endpoint}: fetched {len(rows)} rows but meta.total={total} "
+                "— pagination gap (non-unique sort key at a page boundary?)"
+            )
         return rows
 
     def close(self) -> None:
         self._http.close()
+
+    def __enter__(self) -> FdicClient:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
