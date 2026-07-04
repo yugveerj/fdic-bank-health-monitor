@@ -17,6 +17,8 @@ on:
 jobs:
   detect:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       new_quarter: ${{ steps.check.outputs.new_quarter }}
     env:
@@ -40,6 +42,8 @@ jobs:
     needs: detect
     if: needs.detect.outputs.new_quarter == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}

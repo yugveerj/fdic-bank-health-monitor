@@ -10,6 +10,8 @@ on:
 jobs:
   ingest-fred:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}

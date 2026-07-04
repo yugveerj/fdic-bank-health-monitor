@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# least privilege: the one job only checks out and runs local tooling
+permissions:
+  contents: read
+
 jobs:
   checks:
     runs-on: ubuntu-latest

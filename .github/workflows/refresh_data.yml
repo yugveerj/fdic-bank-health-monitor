@@ -9,9 +9,15 @@ on:
 jobs:
   ingest:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
       FDIC_DB_PATH: "md:fdic_bank_health"
+      # without the FRED key run_all's fred_h8.ingest logs a warning, writes an
+      # empty table, and returns 0 — a manual refresh would silently leave the
+      # H.8 series stale. The weekly/quarterly schedules already pass it.
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
