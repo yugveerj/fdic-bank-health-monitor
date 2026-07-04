@@ -30,3 +30,8 @@ select
     cast(RBCRWAJ as double)            as total_rbc_ratio_pct,
     cast(RBC1AAJ as double)            as leverage_ratio_pct
 from {{ source('raw_fdic', 'raw_fdic_financials') }}
+{% if var('as_of', none) is not none %}
+-- backtest freeze: physically exclude everything after the as-of date, so every
+-- downstream model provably uses only information available at that time
+where strptime(REPDTE, '%Y%m%d')::date <= '{{ var("as_of") }}'::date
+{% endif %}

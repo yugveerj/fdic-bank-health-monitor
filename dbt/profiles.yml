@@ -12,3 +12,7 @@ fdic_bank_health:
       type: duckdb
       path: "md:fdic_bank_health?motherduck_token={{ env_var('MOTHERDUCK_TOKEN') }}"
       threads: 4
+    backtest:
+      type: duckdb
+      path: "{{ env_var('BACKTEST_DB_PATH', '../backtest.duckdb') }}"
+      threads: 4
