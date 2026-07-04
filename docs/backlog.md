@@ -2,42 +2,53 @@
 
 Queued ideas, roughly in the order I'd take them on.
 
-## Workflow — make the four pages feel like one tool
+## Open
 
-- Link the outlier-screen ranked table straight to each bank's profile, so the
-  "open the profile for trend context" step is one click instead of a re-search.
-  (Needs the profile's bank selector to accept a cert from the URL — worth a
-  short spike first.)
-- Show movement: a quarter-over-quarter composite delta, and a short "biggest
-  movers" list, since the analyst steps already tell you to watch for it.
-- Let a reader drop a chosen bank onto the peer-explorer and outlier
-  distributions to see exactly where it sits.
+- If the quarterly alert should reach me off GitHub, wire the notify job to Slack
+  or email instead of (or alongside) the repo issue it opens now.
+- Screen-reader access to the charts themselves: the canvas charts aren't
+  readable, and only the analytical pages currently back them with data tables.
+  A per-chart data-table toggle would close that on the profile pages too.
 
-## Analysis
+## Assessed, not doing
 
-- Per-bank screen history: a small chart on the profile page showing a bank's
-  composite over time, not just the current quarter.
-- A methodology panel showing how correlated the six screen metrics are — honest
-  about where they overlap. Context only; the composite stays as it is.
+- Folding the metric display-name maps into a dbt seed. On inspection the only
+  real duplication is a four-row business-model map across two pages; a seed plus
+  its export and per-page joins would add more plumbing than it removes. Left as
+  inline maps on purpose.
 
-## Operational
+## Recently shipped
 
-- A dbt source-freshness gate on the weekly job, so a quietly stale FRED feed
-  turns a run yellow instead of nothing.
-- Alerting on the quarterly trigger: a notification when a new FDIC quarter
-  actually lands, not just the silent refresh.
-- An accessibility pass — dark-theme contrast, chart alt text, keyboard-friendly
-  dropdowns — checked against WCAG AA.
-- Housekeeping: fold the metric display-name map into one place (a dbt seed)
-  instead of the two page-level CASE blocks it lives in now.
+Workflow — the four pages now link into one another:
 
-## Recently shipped (dashboard polish pass)
+- Bank profiles are a templated route (`/bank-profile/[cert]`) with a searchable
+  directory of every bank; the outlier screen and peer-explorer decile tables
+  link each name straight to its profile.
+- The outlier screen shows the biggest quarter-over-quarter composite moves in a
+  band, not just the current level.
+- The peer explorer can highlight a chosen bank on the distribution.
 
-- Human-readable metric and business-model labels everywhere — the dropdowns,
-  chart titles, and legends read "Return on assets", not `roa_pct`.
-- Median / 10th / 90th reference lines drawn on the peer-explorer histogram,
-  not just listed in the table beside it.
-- A data-vintage line on the landing page: which quarter the data runs through,
-  how many bank-quarters, and when the site was last rebuilt.
-- Architecture diagram: the model count now reads twelve, and the CI bullet says
-  pull requests build against a committed sample rather than the warehouse.
+Analysis:
+
+- The profile page charts a bank's composite over time, tying it back to the
+  screen.
+- The outlier screen shows how correlated the six screen metrics are — honest
+  about overlap; the composite stays unweighted.
+
+Operational:
+
+- The weekly job now checks FRED feed freshness and flags a stale feed instead of
+  deploying old H.8 numbers silently.
+- A new FDIC quarter opens a repo issue announcing it, rather than redeploying in
+  silence.
+- Accessibility pass: the dark theme already clears WCAG AA (~12:1 text
+  contrast, clean heading order, focusable controls); gave the architecture
+  image real alt text.
+
+Earlier polish:
+
+- Human-readable metric and business-model labels everywhere.
+- Median / 10th / 90th reference lines on the peer-explorer histogram.
+- A data-vintage line on the landing page.
+- Architecture diagram: model count corrected to twelve, and the CI bullet now
+  says pull requests build against a committed sample, not the warehouse.
