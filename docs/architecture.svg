@@ -37,7 +37,7 @@
   <rect class="box" x="540" y="130" width="195" height="80" rx="10"/>
   <text x="555" y="157" class="title">dbt</text>
   <text x="555" y="176" class="sub">staging → metrics → marts</text>
-  <text x="555" y="193" class="sub">33 models + tests each build</text>
+  <text x="555" y="193" class="sub">12 models + tests each build</text>
 
   <text x="790" y="30" class="lane">PUBLISH</text>
   <rect class="box accent" x="785" y="45" width="175" height="64" rx="10"/>

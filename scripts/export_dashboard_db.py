@@ -42,7 +42,11 @@ def _export_quality_status(con) -> None:
     if run_results.exists():
         results = json.loads(run_results.read_text())["results"]
         tests = [r for r in results if r["unique_id"].startswith("test.")]
-        passed = sum(1 for r in tests if r["status"] == "pass")
+        # `dbt build` records a passing test as "pass", but if the last thing to
+        # write run_results.json was `dbt docs generate` (as it is in the deploy
+        # job) the same rows read "success" — count both so the published figure
+        # doesn't silently collapse to "0 passed, 0 failed".
+        passed = sum(1 for r in tests if r["status"] in ("pass", "success"))
         failed = sum(1 for r in tests if r["status"] in ("fail", "error"))
         rows.append((
             "dbt tests",
