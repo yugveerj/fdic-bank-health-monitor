@@ -4,6 +4,45 @@ Architecture-level decisions and the reasoning behind them, newest first. The
 README carries a one-line version of each; this file is the full account. Each
 entry records what I chose, what I tried first, and what broke along the way.
 
+## 2026-07-04 — v2 ingestion writes to BigQuery through staging + MERGE
+
+First step of the v2 re-platform (PROJECT_SPEC_V2.md): on the `v2-bigquery`
+branch, ingestion now lands in a BigQuery `fdic_raw` dataset instead of
+DuckDB/MotherDuck. The write path is a new `ingestion/bq.py` beside the old
+`ingestion/db.py` rather than a rewrite of it, because the DuckDB code stays
+load-bearing until decommission: `main` keeps deploying from it, and the
+migration parity checks read the old warehouse through it.
+
+The contract is unchanged — upsert by key, safe to re-run — but the mechanism
+had to change. DuckDB's delete-then-insert ran inside one transaction;
+BigQuery has no transaction spanning a load job and DML, so the keyed write is
+a load into a staging table followed by a single MERGE, which is atomic on its
+own. The staging name is unique per call (and the table expires on its own if
+a crash strands it): with a fixed name, two overlapping runs could truncate
+each other's batch between load and MERGE and silently swap payloads — review
+caught exactly that. CI serializes ingest runs anyway via a concurrency group,
+belt and braces. Two guards got stricter in the port. Once a target table
+exists, its schema drives every later staging load, so a quarter where a
+column arrives all-null can't silently fork the column's type. And batches
+with a NULL key are now rejected outright: key matching uses `=`, which never
+matches NULL, so a null-keyed row would re-insert on every run — a hazard the
+DuckDB version carried silently and none of our tables ever triggered.
+
+Names, so nothing drifts later: dataset `fdic_raw`, env vars `GCP_PROJECT`
+(required), `BQ_RAW_DATASET` and `BQ_LOCATION` (defaulted). Location is the
+US multi-region so the eventual GA4 export and `bigquery-public-data` joins
+don't cross regions. Local auth is plain ADC; CI is Workload Identity
+Federation per the spec — the WIF-vs-key outcome gets its own entry once the
+console setup lands.
+
+The Phase A parity check (`scripts/raw_parity_check.py`) compares row counts
+per quarter for financials, per series-week for FRED, and whole-table for the
+snapshots. It demands exact equality on the overlap but tolerates BigQuery
+being ahead of the old warehouse's high-water mark, clearly labeled: the
+production refresh is scheduled and a branch ingest is not, so on most weeks
+BigQuery legitimately holds a few days of FRED the Saturday run hasn't seen.
+Anything missing or different inside the overlap still fails the run.
+
 ## 2026-07-04 — Bank profiles stay one searchable page, not a URL per bank
 
 I tried Evidence's templated pages (`/bank-profile/[cert]`, one page per
