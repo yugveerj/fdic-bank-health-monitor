@@ -24,6 +24,7 @@ select distinct peer_band from fdic.mart_outlier_flags order by peer_band
 select
     o.cert,
     b.bank_name,
+    '/bank-profile/' || cast(o.cert as integer) as profile_url,
     o.composite_score,
     o.n_screen_metrics,
     o.z_uninsured_share,
@@ -51,7 +52,7 @@ select * from ${screen} limit 50
 ```
 
 <DataTable data={screen_table} rows=25>
-    <Column id=bank_name/>
+    <Column id=profile_url contentType=link linkLabel=bank_name title="Bank"/>
     <Column id=composite_score title="Composite" fmt='#,##0.00'/>
     <Column id=n_screen_metrics title="Metrics"/>
     <Column id=z_uninsured_share title="Uninsured z" fmt='#,##0.0'/>
