@@ -9,16 +9,21 @@ Warehouse values after a from-scratch ingest, compared against independent live 
 requests made outside the ingestion code path. Dollar amounts are thousands, as the
 FDIC reports them; ROA is percent.
 
-| Bank | CERT | Quarter | Total assets | Total deposits | ROA | API re-check | BankFind UI |
+| Bank | CERT | Quarter | Total assets | Total deposits | ROA | API re-check | BankFind UI (assets) |
 |---|---|---|---|---|---|---|---|
-| JPMorgan Chase Bank, N.A. | 628 | 2025-Q4 | 3,752,662,000 | 2,697,842,000 | 1.3449 | ✅ match | ⬜ |
-| Western Alliance Bank | 57512 | 2025-Q4 | 92,735,703 | 77,639,392 | 1.1029 | ✅ match | ⬜ |
-| Heritage Bank, Inc. | 33119 | 2025-Q4 | 2,094,353 | 1,932,253 | 1.0850 | ✅ match | ⬜ |
+| JPMorgan Chase Bank, N.A. | 628 | 2025-Q4 | 3,752,662,000 | 2,697,842,000 | 1.3449 | ✅ match | ✅ 20/20 quarters |
+| Western Alliance Bank | 57512 | 2025-Q4 | 92,735,703 | 77,639,392 | 1.1029 | ✅ match | ✅ 20/20 quarters |
+| Heritage Bank, Inc. | 33119 | 2025-Q4 | 2,094,353 | 1,932,253 | 1.0850 | ✅ match | ✅ 20/20 quarters |
+
+The BankFind UI check is done with the website's own CSV exports rather than by
+eyeball: I downloaded each bank's "Quarterly Assets, Past Five Years" file from
+https://banks.data.fdic.gov/bankfind-suite/ and compared every row against the
+warehouse — **60 of 60 quarterly asset values match exactly** (exports archived
+under `docs/verification_exports/`).
 
 <!-- TODO(revise) -->
-The BankFind UI column is my eyeball check against https://banks.data.fdic.gov/bankfind-suite/
-(search each bank, compare the same three figures for Q4 2025) — ticking those boxes is a
-manual browser step I do myself.
+Deposits and ROA aren't included in that export, so those two columns rest on the
+API re-check; spot-checking them once in the UI proper is still on me: ⬜ deposits ⬜ ROA.
 
 ## Failed-bank history (the backtest depends on this)
 
