@@ -40,9 +40,13 @@ def main() -> int:
     bucket = client.bucket(bucket_name)
     manifest: list[str] = []
     try:
+        # duckdb_tables() scoped to this database, not information_schema:
+        # MotherDuck leaks its own metadata relations (database_snapshots etc.)
+        # into information_schema, and COPY can't read those. Base tables only —
+        # views are derivable and their SQL lives in git.
         tables = [r[0] for r in con.execute(
-            "SELECT table_name FROM information_schema.tables "
-            "WHERE table_schema = 'main' ORDER BY 1"
+            "SELECT table_name FROM duckdb_tables() "
+            "WHERE database_name = current_database() ORDER BY 1"
         ).fetchall()]
         if not tables:
             raise SystemExit("no tables found — wrong database?")
