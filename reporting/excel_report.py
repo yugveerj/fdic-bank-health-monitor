@@ -24,8 +24,26 @@ from dotenv import load_dotenv
 from google.cloud import bigquery, storage
 from openpyxl import Workbook
 from openpyxl.formatting.rule import ColorScaleRule
+from openpyxl.pivot.cache import (
+    CacheDefinition,
+    CacheField,
+    CacheSource,
+    SharedItems,
+    WorksheetSource,
+)
+from openpyxl.pivot.fields import Text
+from openpyxl.pivot.table import (
+    DataField,
+    FieldItem,
+    Location,
+    PivotField,
+    PivotTableStyle,
+    RowColField,
+    TableDefinition,
+)
 from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +58,11 @@ Z_COLUMNS = {
     "z_nim_trend": "NIM trend z",
     "z_equity_ratio": "Equity z",
 }
+
+# the Excel Table behind the pivot and every live formula in the workbook;
+# order defines the sheet layout, names must match the movers frame
+PIVOT_COLS = ["peer_band", "bank_name", "cert", "composite", "composite_prior",
+              "delta"] + list(Z_COLUMNS)
 
 METHODOLOGY = """How to read this report
 
@@ -130,8 +153,103 @@ def _autosize(ws, widths: dict[int, int]) -> None:
         ws.column_dimensions[get_column_letter(col)].width = width
 
 
+def _pivot_data_sheet(wb: Workbook, movers: pd.DataFrame) -> int:
+    """Every mover row as an Excel Table named MoversData — the source for
+    the pivot sheet and for the workbook's live formulas. The delta column
+    is a native formula (composite − prior), not a baked value."""
+    ws = wb.create_sheet("PivotData")
+    for j, col in enumerate(PIVOT_COLS, start=1):
+        ws.cell(row=1, column=j, value=col)
+    _style_header(ws, 1, len(PIVOT_COLS))
+    delta_idx = PIVOT_COLS.index("delta") + 1
+    for i, r in enumerate(movers[PIVOT_COLS].itertuples(index=False), start=2):
+        for j, v in enumerate(r, start=1):
+            if j == delta_idx:
+                ws.cell(row=i, column=j, value=f"=D{i}-E{i}").number_format = "0.000"
+            else:
+                ws.cell(row=i, column=j,
+                        value=None if pd.isna(v) else (v.item() if hasattr(v, "item") else v))
+    n_rows = len(movers) + 1
+    ref = f"A1:{get_column_letter(len(PIVOT_COLS))}{n_rows}"
+    table = Table(displayName="MoversData", ref=ref)
+    table.tableStyleInfo = TableStyleInfo(name="TableStyleMedium2", showRowStripes=True)
+    ws.add_table(table)
+    _autosize(ws, {1: 12, 2: 40, **{c: 12 for c in range(3, len(PIVOT_COLS) + 1)}})
+    return n_rows
+
+
+def _pivot_sheet(wb: Workbook, n_rows: int) -> None:
+    """A real PivotTable over MoversData. No cache records are written — the
+    cache is marked invalid + refresh-on-load, so Excel rebuilds it from the
+    worksheet source the moment the file opens (verified against openpyxl
+    3.1.5's writer; docs call creation unsupported, hence the belt-and-braces
+    validation in the tests and the one-time open-in-Excel check)."""
+    ncols = len(PIVOT_COLS)
+    cache = CacheDefinition(
+        invalid=True,
+        refreshOnLoad=True,
+        createdVersion=8, refreshedVersion=8, minRefreshableVersion=3,
+        upgradeOnRefresh=True,
+        recordCount=0,
+        cacheSource=CacheSource(
+            type="worksheet",
+            worksheetSource=WorksheetSource(
+                ref=f"A1:{get_column_letter(ncols)}{n_rows}", sheet="PivotData"),
+        ),
+        cacheFields=[
+            CacheField(name="peer_band",
+                       sharedItems=SharedItems(_fields=[Text(v=b) for b in BANDS])),
+        ] + [CacheField(name=c, sharedItems=SharedItems()) for c in PIVOT_COLS[1:]],
+    )
+    band_items = [FieldItem(x=i) for i in range(len(BANDS))] + [FieldItem(t="default")]
+    composite_idx = PIVOT_COLS.index("composite")
+    delta_idx = PIVOT_COLS.index("delta")
+    bank_idx = PIVOT_COLS.index("bank_name")
+    pivot_fields = []
+    for i in range(ncols):
+        if i == 0:
+            pivot_fields.append(PivotField(axis="axisRow", showAll=False, items=band_items))
+        elif i in (composite_idx, delta_idx, bank_idx):
+            pivot_fields.append(PivotField(dataField=True, showAll=False))
+        else:
+            pivot_fields.append(PivotField(showAll=False))
+    pivot = TableDefinition(
+        name="BandPivot",
+        cacheId=1,
+        dataCaption="Values",
+        applyNumberFormats=False, applyBorderFormats=False, applyFontFormats=False,
+        applyPatternFormats=False, applyAlignmentFormats=False,
+        applyWidthHeightFormats=True,
+        useAutoFormatting=True,
+        itemPrintTitles=True,
+        createdVersion=8, updatedVersion=8, minRefreshableVersion=3,
+        indent=0, outline=True, outlineData=True, multipleFieldFilters=False,
+        location=Location(ref="A3:D8", firstHeaderRow=1, firstDataRow=1, firstDataCol=1),
+        pivotFields=pivot_fields,
+        rowFields=[RowColField(x=0)],
+        dataFields=[
+            DataField(name="Average composite", fld=composite_idx,
+                      subtotal="average", baseField=0, baseItem=0),
+            DataField(name="Average change", fld=delta_idx,
+                      subtotal="average", baseField=0, baseItem=0),
+            DataField(name="Banks", fld=bank_idx,
+                      subtotal="count", baseField=0, baseItem=0),
+        ],
+        pivotTableStyleInfo=PivotTableStyle(
+            name="PivotStyleMedium9", showRowHeaders=True, showColHeaders=True,
+            showRowStripes=False, showColStripes=False, showLastColumn=True),
+    )
+    pivot.cache = cache
+    ws = wb.create_sheet("Pivot")
+    ws["A1"] = "Composite score by size band — a live pivot over the PivotData sheet"
+    ws["A1"].font = Font(bold=True, size=12)
+    ws.add_pivot(pivot)
+    _autosize(ws, {1: 24, 2: 18, 3: 18, 4: 12})
+
+
 def build_workbook(frames: dict) -> Workbook:
     wb = Workbook()
+    wb.calculation.fullCalcOnLoad = True
 
     ws = wb.active
     ws.title = "Summary"
@@ -162,7 +280,28 @@ def build_workbook(frames: dict) -> Workbook:
         ws.cell(row=i, column=1, value=str(week))
         for j, value in enumerate(row, start=2):
             ws.cell(row=i, column=j, value=None if pd.isna(value) else float(value))
-    _autosize(ws, {1: 28, 2: 22, 3: 22, 4: 22, 5: 22})
+
+    # live formulas over the MoversData table — these cells compute in Excel,
+    # nothing here is baked (XLOOKUP/MAXIFS need Excel's _xlfn prefix on disk;
+    # Excel displays them unprefixed)
+    r0 = 13 + len(pivot) + 2
+    ws.cell(row=r0, column=1,
+            value="By size band — live formulas over the PivotData table").font = Font(bold=True)
+    for j, h in enumerate(["Band", "Banks", "Avg composite", "Top riser Δ", "Top riser"], start=1):
+        ws.cell(row=r0 + 1, column=j, value=h)
+    _style_header(ws, r0 + 1, 5)
+    for i, band in enumerate(BANDS):
+        r = r0 + 2 + i
+        ws.cell(row=r, column=1, value=band)
+        ws.cell(row=r, column=2, value=f'=COUNTIFS(MoversData[peer_band],A{r})')
+        ws.cell(row=r, column=3,
+                value=f'=ROUND(AVERAGEIFS(MoversData[composite],MoversData[peer_band],A{r}),3)')
+        ws.cell(row=r, column=4,
+                value=f'=ROUND(_xlfn.MAXIFS(MoversData[delta],MoversData[peer_band],A{r}),3)')
+        ws.cell(row=r, column=5,
+                value=(f'=_xlfn.XLOOKUP(_xlfn.MAXIFS(MoversData[delta],MoversData[peer_band],A{r}),'
+                       f'MoversData[delta],MoversData[bank_name])'))
+    _autosize(ws, {1: 28, 2: 22, 3: 22, 4: 22, 5: 40})
 
     for band in BANDS:
         ws = wb.create_sheet(band.replace(">", "over "))
@@ -183,12 +322,14 @@ def build_workbook(frames: dict) -> Workbook:
             first_data = row + 1
             for r in chunk.itertuples():
                 row += 1
+                # Change is a native formula over the two cells beside it
                 values = [r.bank_name, int(r.cert), float(r.composite),
-                          float(r.composite_prior), float(r.delta)]
+                          float(r.composite_prior), f"=C{row}-D{row}"]
                 values += [None if pd.isna(getattr(r, c)) else round(float(getattr(r, c)), 2)
                            for c in Z_COLUMNS]
                 for j, v in enumerate(values, start=1):
                     ws.cell(row=row, column=j, value=v)
+                ws.cell(row=row, column=5).number_format = "0.000"
             if row >= first_data:
                 z_range = (f"F{first_data}:{get_column_letter(5 + len(Z_COLUMNS))}{row}")
                 ws.conditional_formatting.add(z_range, ColorScaleRule(
@@ -198,6 +339,9 @@ def build_workbook(frames: dict) -> Workbook:
                 ))
             row += 2
         _autosize(ws, {1: 44, 2: 10, **{c: 12 for c in range(3, 6 + len(Z_COLUMNS))}})
+
+    n_rows = _pivot_data_sheet(wb, frames["movers"])
+    _pivot_sheet(wb, n_rows)
 
     ws = wb.create_sheet("Methodology")
     for i, line in enumerate(METHODOLOGY.strip().split("\n"), start=1):

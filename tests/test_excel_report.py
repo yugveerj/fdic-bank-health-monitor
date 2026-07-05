@@ -8,7 +8,7 @@ import io
 import pandas as pd
 from openpyxl import load_workbook
 
-from reporting.excel_report import BANDS, Z_COLUMNS, build_workbook, quarter_tag
+from reporting.excel_report import BANDS, PIVOT_COLS, Z_COLUMNS, build_workbook, quarter_tag
 
 
 def _frames():
@@ -44,7 +44,39 @@ def _reload(frames):
 
 def test_workbook_opens_with_expected_sheets():
     wb = _reload(_frames())
-    assert wb.sheetnames == ["Summary", "$1B-$10B", "$10B-$100B", "over $100B", "Methodology"]
+    assert wb.sheetnames == ["Summary", "$1B-$10B", "$10B-$100B", "over $100B",
+                             "PivotData", "Pivot", "Methodology"]
+
+
+def test_pivot_data_is_a_real_table_matching_the_code():
+    frames = _frames()
+    wb = _reload(frames)
+    ws = wb["PivotData"]
+    table = ws.tables["MoversData"]
+    # drift guard: the table's columns are what every live formula references
+    assert [c.name for c in table.tableColumns] == PIVOT_COLS
+    assert table.ref.endswith(str(len(frames["movers"]) + 1))
+    # delta is a native formula, not a baked value
+    assert ws.cell(row=2, column=PIVOT_COLS.index("delta") + 1).value == "=D2-E2"
+
+
+def test_pivot_table_survives_a_round_trip():
+    wb = _reload(_frames())
+    pivots = wb["Pivot"]._pivots
+    assert len(pivots) == 1
+    assert [f.name for f in pivots[0].cache.cacheFields] == PIVOT_COLS
+    assert pivots[0].cache.refreshOnLoad  # Excel rebuilds the cache on open
+
+
+def test_summary_formulas_are_native_and_prefixed():
+    wb = _reload(_frames())
+    text = [str(c.value) for row in wb["Summary"].iter_rows() for c in row
+            if isinstance(c.value, str) and c.value.startswith("=")]
+    assert any("COUNTIFS(MoversData[peer_band]" in f for f in text)
+    assert any("_xlfn.XLOOKUP(" in f for f in text)   # Excel-365 fns need the prefix on disk
+    assert any("_xlfn.MAXIFS(" in f for f in text)
+    band = wb["$1B-$10B"]
+    assert str(band["E5"].value).startswith("=C5-D5"[:3])  # Change column is a formula
 
 
 def test_spot_check_values_match_the_frames():
