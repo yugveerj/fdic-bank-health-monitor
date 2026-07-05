@@ -304,7 +304,7 @@ def phone_layout(leaves: list[str], root_id: int, flow_id: int) -> str:
     counterparts; Desktop recomputes the geometry on open."""
     body = "\n".join(leaves)
     return f"""      <devicelayouts>
-        <devicelayout auto-generated='true' name='Phone'>
+        <devicelayout name='Phone'>
           <size maxheight='700' minheight='700' sizing-mode='vscroll' />
           <zones>
             <zone h='100000' id='{root_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
