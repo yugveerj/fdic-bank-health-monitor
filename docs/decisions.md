@@ -4,6 +4,28 @@ Architecture-level decisions and the reasoning behind them, newest first. The
 README carries a one-line version of each; this file is the full account. Each
 entry records what I chose, what I tried first, and what broke along the way.
 
+## 2026-07-05 — Sector forecasts: fixed candidates, a baseline that can win
+
+The forecasting module (v2 Phase D) had three design decisions worth
+recording. First, the candidate set is fixed — a seasonal-naive baseline,
+ETS with damped additive trend, ARIMA(1,1,1) with drift — rather than
+searched. With four series and no holdout beyond the backtest itself, an
+order search would just overfit the backtest and the published error rates
+would flatter the winner. Second, publication is earned per series: a
+candidate ships only if it beats the baseline's sMAPE in a rolling-origin
+backtest (expanding window from two years of history, new origin every four
+weeks, twelve-week horizon), ties lose, and the dashboard prints the full
+table either way. On the first live run all four series went to a model —
+ETS for deposits, ARIMA for bank credit, C&I loans, and total assets — with
+sMAPEs around 0.4–1.0% against the baseline's 4–5.5%; smooth trending
+aggregates are exactly where lag-52 loses. Third, the baseline's intervals
+are empirical error quantiles rather than ±1.96σ, deliberately asymmetric:
+under drift the naive point sits low, and a fan chart's job is to cover
+where actuals land, not to flatter the point. Two hard lines hold
+throughout: the input allowlist is the four H.8 aggregates (bank-level
+forecasting is prohibited and the module has no path to it), and a gap in
+the weekly grid stops the run instead of getting imputed.
+
 ## 2026-07-05 — Why we re-platformed: DuckDB/MotherDuck → BigQuery
 
 Nothing was wrong with the v1 warehouse. MotherDuck ran this project's
