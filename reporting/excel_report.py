@@ -74,7 +74,7 @@ def fetch_frames(client: bigquery.Client, marts: str) -> dict:
         SELECT
             count(*)                                        AS banks_reporting,
             countif(d.is_active)                            AS active_banks,
-            round(sum(f.total_assets) / 1e9, 1)             AS combined_assets_bn,
+            round(sum(f.total_assets) / 1e9, 1)             AS combined_assets_tn,
             round((SELECT DISTINCT percentile_cont(roa_pct, 0.5) OVER ()
                    FROM `{marts}.fct_bank_quarters` WHERE report_date = '{latest}'), 2)
                                                             AS median_roa_pct,
@@ -143,7 +143,7 @@ def build_workbook(frames: dict) -> Workbook:
     labels = [
         ("Banks reporting", "banks_reporting"),
         ("Active banks", "active_banks"),
-        ("Combined assets ($B)", "combined_assets_bn"),
+        ("Combined assets ($T)", "combined_assets_tn"),
         ("Median ROA (%)", "median_roa_pct"),
         ("Median NIM (%)", "median_nim_pct"),
         ("Median equity/assets (%)", "median_equity_pct"),

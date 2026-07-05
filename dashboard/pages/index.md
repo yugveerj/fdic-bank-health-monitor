@@ -39,7 +39,9 @@ current quarter across three bands, and any name that catches your eye has its
 full history on the [bank profile](/bank-profile). The same peer statistics are
 also published as a
 [Tableau Public satellite](https://public.tableau.com/app/profile/yugveer.jain/viz/FDICBankHealthMonitorPeerSatellite/Peerexplorer),
-fed from the marts through a Google Sheet extract.
+fed from the marts through a Google Sheet extract — and as a
+[downloadable Excel peer report](https://storage.googleapis.com/fdic-monitor-reports/reports/latest.xlsx),
+regenerated on every refresh with the quarter's biggest movers per size band.
 
 ## The sector at a glance
 

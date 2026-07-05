@@ -24,7 +24,7 @@ def _frames():
         "latest": "2026-03-31",
         "prior": "2025-12-31",
         "kpis": pd.DataFrame([{
-            "banks_reporting": 1059, "active_banks": 1045, "combined_assets_bn": 25200.0,
+            "banks_reporting": 1059, "active_banks": 1045, "combined_assets_tn": 25.3,
             "median_roa_pct": 1.22, "median_nim_pct": 3.61, "median_equity_pct": 10.4,
         }]),
         "h8": pd.DataFrame([
