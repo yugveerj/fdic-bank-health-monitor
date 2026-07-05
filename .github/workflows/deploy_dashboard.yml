@@ -54,6 +54,14 @@ jobs:
           GCS_REPORTS_BUCKET: ${{ vars.GCS_REPORTS_BUCKET }}
         run: uv run python -m reporting.excel_report
 
+      # the Tableau Public data path: two extracts to the shared Google Sheet
+      # the published workbook reads (daily refresh on Tableau's side)
+      - name: Export Tableau extracts to the Google Sheet
+        if: ${{ vars.TABLEAU_SHEET_ID != '' }}
+        env:
+          TABLEAU_SHEET_ID: ${{ vars.TABLEAU_SHEET_ID }}
+        run: uv run python -m reporting.tableau_sheet
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
