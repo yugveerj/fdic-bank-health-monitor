@@ -91,7 +91,25 @@ parity check against production. Fallback if WIF misbehaves: a JSON key for
 `fdic-ci` in an Actions secret with `credentials_json` on the auth step —
 recorded in decisions.md if we ever need it.
 
-## 5. Local dev (optional, for running ingestion from this machine)
+## 5. Archive bucket + storage role (Phase C decommission; also serves Phase D reports)
+
+One private bucket for the final MotherDuck snapshot (cold storage) and the
+Storage Object Admin role the spec assigns the service account anyway:
+
+```sh
+gcloud storage buckets create gs://fdic-monitor-archive --project fdic-monitor \
+  --location US --uniform-bucket-level-access --public-access-prevention
+
+gcloud projects add-iam-policy-binding fdic-monitor \
+  --member "serviceAccount:fdic-ci@fdic-monitor.iam.gserviceaccount.com" \
+  --role roles/storage.objectAdmin
+```
+
+Then add a repo variable `GCS_ARCHIVE_BUCKET` = `fdic-monitor-archive`.
+(The public reports bucket is a separate Phase D decision — nothing public
+is created here.)
+
+## 6. Local dev (optional, for running ingestion from this machine)
 
 ```sh
 # install the gcloud CLI (macOS): brew install --cask google-cloud-sdk
