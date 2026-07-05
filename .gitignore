@@ -8,11 +8,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Data: raw API cache (can be large) and local DuckDB files
+# Data: raw API cache (can be large)
 ingestion/raw/*
 !ingestion/raw/.gitkeep
-*.duckdb
-*.duckdb.wal
 
 # dbt
 dbt/target/

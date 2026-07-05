@@ -1,10 +1,9 @@
 """BigQuery warehouse helpers: idempotent upserts via staging load + MERGE.
 
-Replaces the DuckDB-era write path in ingestion.db (which stays in the repo for
-the migration-period parity checks against the old warehouse). The contract is
-identical: upsert-by-key, safe to re-run with overlapping data. BigQuery has no
-transaction spanning a load job and DML, so the atomic keyed write is a load
-into a staging table followed by a single MERGE.
+Same contract the DuckDB-era ingestion.db carried (v1, retired at the 2026-07
+decommission): upsert-by-key, safe to re-run with overlapping data. BigQuery
+has no transaction spanning a load job and DML, so the atomic keyed write is a
+load into a staging table followed by a single MERGE.
 
 Auth is Application Default Credentials: `gcloud auth application-default login`
 locally, Workload Identity Federation in CI. Config is env-driven — see

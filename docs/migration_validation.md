@@ -90,3 +90,16 @@ Two failures happened on the way to green, both fixed and recorded:
 No unexplained numeric drift remains. Per CLAUDE.md this gate blocks
 cutover; it is now open. Cutover itself (merge to `main`, Evidence on
 BigQuery, MotherDuck decommission) is Phase C and needs owner approval.
+
+## 6. Postscript: cutover and decommission (2026-07-05, owner-approved)
+
+Production merged and deployed from BigQuery the same day; all six dashboard
+pages verified on the built artifact before merge, CI (including the fixture
+backtest on ephemeral datasets), the weekly refresh, and the quarterly
+detector all green end-to-end on the new stack. The final MotherDuck
+snapshot — all 9 tables, 749,133 rows total, with a row-count manifest —
+landed in `gs://fdic-monitor-archive/motherduck_final_20260705/` (run
+28727995118) before the database was dropped (run 28728015870) and the
+MOTHERDUCK_TOKEN secret deleted. The parity-check harnesses and the DuckDB
+write path were removed with the decommission; they live in git history at
+the runs cited above.
