@@ -1,0 +1,46 @@
+# Build the packaged Tableau workbook (.twbx with embedded Hyper extracts)
+# as a downloadable artifact. Manual dispatch: run it whenever a fresh
+# packaged workbook is needed (first publish, or a republish after the
+# dashboard design changes — routine data updates flow through the Google
+# Sheet sync instead, no rebuild needed).
+name: Tableau twbx build
+
+concurrency:
+  group: tableau-twbx
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: ${{ vars.GCP_PROJECT != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # WIF
+    env:
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Install Python project (with the tableau group)
+        run: uv sync --locked --group tableau
+
+      - name: Build the packaged workbook
+        run: uv run --group tableau python tableau/build_twbx.py
+
+      - name: Upload the workbook
+        uses: actions/upload-artifact@v4
+        with:
+          name: fdic-peer-satellite-twbx
+          path: tableau/fdic_peer_satellite.twbx

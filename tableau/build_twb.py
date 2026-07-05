@@ -95,6 +95,19 @@ def connection_xml(conn_name: str, tab: str, cols: list, grid: str) -> str:
       </connection>"""
 
 
+def extract_block(hyper_name: str) -> str:
+    """The embedded-extract declaration a .twbx carries. Public Edition
+    refuses to even open a live-connection workbook, so the packaged build
+    ships one of these per datasource, pointing at a real .hyper inside the
+    archive; the cloud named-connection stays alongside it, which is what
+    keeps 'sync with Google Sheets' possible after publish."""
+    return f"""      <extract count='-1' enabled='true' units='records'>
+        <connection access_mode='readonly' author-locale='en_US' class='hyper' dbname='Data/Extracts/{hyper_name}.hyper' default-settings='hyper' schema='Extract' sslmode='' tablename='Extract'>
+          <relation name='Extract' table='[Extract].[Extract]' type='table' />
+        </connection>
+      </extract>"""
+
+
 def column_decls(cols: list) -> str:
     out = []
     for n, caption, ltype, role in cols:
@@ -106,7 +119,7 @@ def column_decls(cols: list) -> str:
     return "\n".join(out)
 
 
-def datasource_peer() -> str:
+def datasource_peer(extracts: bool = False) -> str:
     return f"""    <datasource caption='peer_percentiles (FDIC)' inline='true' name='{DS_PEER}' version='18.1'>
 {connection_xml(CONN_PEER, "peer_percentiles", PEER_COLS, "A1:G14456:no:A1:G14456:0")}
       <aliases enabled='yes' />
@@ -121,6 +134,7 @@ def datasource_peer() -> str:
       <column-instance column='[value]' derivation='Avg' name='[avg:value:qk]' pivot='key' type='quantitative' />
       <column-instance column='[robust_z]' derivation='Avg' name='[avg:robust_z:qk]' pivot='key' type='quantitative' />
       <column-instance column='[peer_median]' derivation='Avg' name='[avg:peer_median:qk]' pivot='key' type='quantitative' />
+{extract_block("peer_percentiles") if extracts else ""}
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <style>
         <style-rule element='mark'>
@@ -137,7 +151,7 @@ def datasource_peer() -> str:
     </datasource>"""
 
 
-def datasource_trend() -> str:
+def datasource_trend(extracts: bool = False) -> str:
     instances = [
         "      <column-instance column='[bank_name]' derivation='None' name='[none:bank_name:nk]' pivot='key' type='nominal' />",
         "      <column-instance column='[report_date]' derivation='None' name='[none:report_date:qk]' pivot='key' type='quantitative' />",
@@ -151,6 +165,7 @@ def datasource_trend() -> str:
       <aliases enabled='yes' />
 {column_decls(TREND_COLS)}
 {chr(10).join(instances)}
+{extract_block("bank_trends") if extracts else ""}
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
     </datasource>"""
 
@@ -466,7 +481,7 @@ def windows() -> str:
     ])
 
 
-def build() -> str:
+def build(extracts: bool = False) -> str:
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 
 <workbook original-version='18.1' source-build='2026.1.1 (20261.26.0410.0924)' source-platform='mac' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
@@ -475,8 +490,8 @@ def build() -> str:
     <preference name='ui.shelf.height' value='26' />
   </preferences>
   <datasources>
-{datasource_peer()}
-{datasource_trend()}
+{datasource_peer(extracts)}
+{datasource_trend(extracts)}
   </datasources>
   <worksheets>
 {worksheet_distribution()}

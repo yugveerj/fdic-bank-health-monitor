@@ -122,6 +122,7 @@
       <column-instance column='[value]' derivation='Avg' name='[avg:value:qk]' pivot='key' type='quantitative' />
       <column-instance column='[robust_z]' derivation='Avg' name='[avg:robust_z:qk]' pivot='key' type='quantitative' />
       <column-instance column='[peer_median]' derivation='Avg' name='[avg:peer_median:qk]' pivot='key' type='quantitative' />
+
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <style>
         <style-rule element='mark'>
@@ -358,6 +359,7 @@
       <column-instance column='[loans_to_deposits]' derivation='Avg' name='[avg:loans_to_deposits:qk]' pivot='key' type='quantitative' />
       <column-instance column='[efficiency_ratio_pct]' derivation='Avg' name='[avg:efficiency_ratio_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[noncurrent_loans_ratio_pct]' derivation='Avg' name='[avg:noncurrent_loans_ratio_pct:qk]' pivot='key' type='quantitative' />
+
       <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
     </datasource>
   </datasources>

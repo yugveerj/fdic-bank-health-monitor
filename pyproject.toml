@@ -23,6 +23,9 @@ dev = [
     "ruff",
     "pytest",
 ]
+tableau = [
+    "tableauhyperapi>=0.0.25080",
+]
 
 [tool.ruff]
 line-length = 100
