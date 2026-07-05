@@ -46,9 +46,12 @@ sources:
   - name: ga4_export
     description: >
       Own-property GA4 daily export (property 544257899, linked 2026-07-05).
-      The dataset materializes when the first daily export lands; the models
-      reading this source stay disabled (var ga4_export_enabled) until it
-      exists in BigQuery.
+      The dataset materializes when the first daily export lands; until then
+      the source AND its staging model are disabled behind ga4_export_enabled,
+      because dbt docs generate catalogs every enabled source's dataset and a
+      404 there fails the whole deploy.
+    config:
+      enabled: "{{ var('ga4_export_enabled', false) }}"
     schema: "{{ env_var('GA4_EXPORT_DATASET', 'analytics_544257899') }}"
     freshness: null
     tables:
