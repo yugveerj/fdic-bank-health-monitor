@@ -117,9 +117,22 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
         with:
           # defaults give up after 10 status errors / 10 minutes, which is what
           # kept failing overnight while the Pages backend was throttling
+          error_count: 30
+          timeout: 1200000
+      # the other throttle signature is an instant "Deployment failed, try
+      # again later" — an immediate retry hits the same throttle, so back off
+      # five minutes first; busy days saw this kill back-to-back deploys
+      - name: Back off before retrying
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 300
+      - name: Deploy (retry after Pages throttle)
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        with:
           error_count: 30
           timeout: 1200000
