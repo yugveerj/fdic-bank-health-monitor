@@ -3,7 +3,10 @@ version: 2
 sources:
   - name: raw_fdic
     description: Raw FDIC BankFind Suite API data, landed by ingestion/run_all.py
-    schema: fdic_raw
+    # env-switchable so the backtest can point the whole project at its frozen
+    # raw copies (scripts/run_backtest.py) — same mechanism as v1, where the
+    # frozen .duckdb file carried its own raw tables
+    schema: "{{ env_var('BQ_RAW_DATASET', 'fdic_raw') }}"
     freshness:
       warn_after: {count: 130, period: day}   # quarterly data + ~60-day publication lag
       error_after: {count: 200, period: day}

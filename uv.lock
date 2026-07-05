@@ -371,21 +371,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dbt-duckdb"
-version = "1.10.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "dbt-adapters" },
-    { name = "dbt-common" },
-    { name = "dbt-core" },
-    { name = "duckdb" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/d3/0f9f6a4de94e0f95dcfabbba5e8ef7670de695483345edd9e5b36e93d024/dbt_duckdb-1.10.1.tar.gz", hash = "sha256:5d6df1589d4ba21fe20ac08454a32763d3263798c9f5914280eabd1dc285cbc0", size = 145907, upload-time = "2026-02-17T17:29:04.283Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/26/0ce2b1aeecdd1a18a9fac6f02d08f60c95944f036866f3fe37146298d4e4/dbt_duckdb-1.10.1-py3-none-any.whl", hash = "sha256:90658ecb367082786c5ea2ffbf9e35bb4116fa5ad1bc2f287c4dc1f3984bafa1", size = 85089, upload-time = "2026-02-17T17:29:03.117Z" },
-]
-
-[[package]]
 name = "dbt-extractor"
 version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -515,7 +500,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "dbt-bigquery" },
     { name = "dbt-core" },
-    { name = "dbt-duckdb" },
     { name = "duckdb" },
     { name = "google-cloud-bigquery" },
     { name = "httpx" },
@@ -534,7 +518,6 @@ dev = [
 requires-dist = [
     { name = "dbt-bigquery", specifier = ">=1.11.3" },
     { name = "dbt-core", specifier = ">=1.11.12" },
-    { name = "dbt-duckdb", specifier = ">=1.10.1" },
     { name = "duckdb", specifier = ">=1.5.4" },
     { name = "google-cloud-bigquery", specifier = ">=3.42.1" },
     { name = "httpx", specifier = ">=0.28.1" },

@@ -7,7 +7,6 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
     "dbt-bigquery>=1.11.3",
     "dbt-core>=1.11.12",
-    "dbt-duckdb>=1.10.1",
     "duckdb>=1.5.4",
     "google-cloud-bigquery>=3.42.1",
     "httpx>=0.28.1",

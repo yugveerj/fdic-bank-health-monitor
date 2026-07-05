@@ -94,12 +94,27 @@ four non-null pairs and the two formulations are the same population.
 `safe_divide` covers the single-observation frame (var_pop = 0), which
 DuckDB's regr_slope also returns NULL for — and which the guard hides anyway.
 
+## Backtest port (scripts/run_backtest.py)
+
+The frozen `.duckdb` file becomes two disposable datasets: `backtest_raw`
+(raw copies, financials truncated at the as-of date) and `dbt_backtest` (the
+models, via the profiles backtest target). `sources.yml` gained an
+env-switchable schema (`BQ_RAW_DATASET`) so the frozen build reads its own
+raw copies — the same mechanism v1 got for free from everything living in
+one file. The equivalence proof's `EXCEPT` becomes `EXCEPT DISTINCT`
+(identical semantics — standard EXCEPT is distinct, and rows are unique per
+cert). Rank-set selection moves from path-sniffing (`ci_warehouse.duckdb`)
+to an explicit `BACKTEST_RANK_SET` env (`frozen` default / `fixture` /
+`skip`). Exhibits are written with lowercase booleans to stay diffable
+against the DuckDB-era committed CSVs; float text formatting may differ
+without meaning anything — the rank assertions and the 1e-9 mart parity are
+the real gates.
+
 ## Known transitional breakage (on this branch, until ported)
 
-- `scripts/run_backtest.py`, `scripts/check_new_quarter.py`,
-  `scripts/export_dashboard_db.py` still target DuckDB and reference dbt
-  targets that no longer exist on this branch. run_backtest is next
-  (Phase B parity harness); the other two port with Phase C.
+- `scripts/check_new_quarter.py` and `scripts/export_dashboard_db.py` still
+  target DuckDB; they port with Phase C (the export may disappear entirely
+  once Evidence reads BigQuery directly).
 - `.github/workflows/ci.yml`'s fixture dbt build would fail on this branch's
-  models; it only triggers on PRs, and the PR to main opens after cutover
-  prep adapts it.
+  models (dbt-duckdb was removed); it only triggers on PRs, and the PR to
+  main opens after cutover prep adapts it.
