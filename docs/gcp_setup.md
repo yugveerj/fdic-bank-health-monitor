@@ -18,8 +18,11 @@ catch surprises, not expected spend.
 ## 2. Enable APIs (Cloud Shell)
 
 ```sh
+# iamcredentials is what WIF uses to mint the service account's token —
+# without it every CI auth fails with SERVICE_DISABLED
 gcloud services enable bigquery.googleapis.com bigquerystorage.googleapis.com \
   storage.googleapis.com sheets.googleapis.com drive.googleapis.com \
+  iamcredentials.googleapis.com \
   --project fdic-monitor
 ```
 
