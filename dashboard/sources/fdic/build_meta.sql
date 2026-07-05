@@ -1,1 +1,1 @@
-select * from build_meta
+select * from analytics.build_meta

@@ -1,4 +1,9 @@
+# BigQuery source. authenticator gcloud-cli = plain Application Default
+# Credentials: `gcloud auth application-default login` locally, the WIF
+# credential file in CI. No secrets live in this repo either way.
 name: fdic
-type: duckdb
+type: bigquery
 options:
-  filename: fdic.duckdb
+  project_id: fdic-monitor
+  location: US
+  authenticator: gcloud-cli

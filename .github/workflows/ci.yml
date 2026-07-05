@@ -5,11 +5,11 @@ on:
     branches: [main]
   pull_request:
 
-# least privilege: the one job only checks out and runs local tooling
 permissions:
   contents: read
 
 jobs:
+  # secretless: lint + unit tests run everywhere, including fork PRs
   checks:
     runs-on: ubuntu-latest
     steps:
@@ -29,22 +29,62 @@ jobs:
       - name: Test
         run: uv run pytest
 
-      # full dbt build on a committed sample of real API rows — never touches
-      # the FDIC API and needs no secrets, so it runs on fork PRs too
-      - name: Build fixture warehouse
-        run: uv run python -m scripts.build_ci_warehouse
+  # full dbt build + backtest on a committed sample of real API rows — never
+  # touches the FDIC API. Ephemeral ci_* datasets namespaced by run id, so
+  # concurrent PRs can't collide; always deleted at the end. Fork PRs skip
+  # (no OIDC token there) — the secretless checks above still cover them.
+  fixture-pipeline:
+    needs: checks
+    if: ${{ vars.GCP_PROJECT != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # WIF
+    env:
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+      CI_RAW: ci_raw_${{ github.run_id }}
+      CI_MARTS: ci_marts_${{ github.run_id }}
+      CI_BT_RAW: ci_btraw_${{ github.run_id }}
+      CI_BT_MODELS: ci_btmodels_${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Load fixture dataset
+        env:
+          CI_RAW_DATASET: ${{ env.CI_RAW }}
+        run: uv run python -m scripts.build_ci_fixture
 
       - name: dbt build (models + tests on the fixture)
         working-directory: dbt
         env:
           DBT_TARGET: backtest
-          BACKTEST_DB_PATH: ../ci_warehouse.duckdb
+          BACKTEST_DATASET: ${{ env.CI_MARTS }}
+          BQ_RAW_DATASET: ${{ env.CI_RAW }}
         run: DBT_PROFILES_DIR=. uv run dbt build
 
       - name: Backtest end to end on the fixture
         # keeps the README's one-command promise honest on every PR
         env:
-          FDIC_PROD_DB: ci_warehouse.duckdb
-          BACKTEST_DB_PATH: ci_backtest.duckdb
+          BQ_RAW_DATASET: ${{ env.CI_RAW }}
+          BACKTEST_RAW_DATASET: ${{ env.CI_BT_RAW }}
+          BACKTEST_DATASET: ${{ env.CI_BT_MODELS }}
+          FDIC_PROD_DATASET: ${{ env.CI_MARTS }}
+          BACKTEST_RANK_SET: fixture
           BACKTEST_OUT_DIR: /tmp/backtest_ci
         run: uv run python -m scripts.run_backtest
+
+      - name: Delete ephemeral datasets
+        if: always()
+        run: uv run python -m scripts.ci_cleanup "$CI_RAW" "$CI_MARTS" "$CI_BT_RAW" "$CI_BT_MODELS"

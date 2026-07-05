@@ -19,15 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write # WIF
     outputs:
       new_quarter: ${{ steps.check.outputs.new_quarter }}
       latest_quarter: ${{ steps.check.outputs.latest_quarter }}
     env:
-      MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-      FDIC_DB_PATH: "md:fdic_bank_health"
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
       FDIC_HIGH_WATER_OVERRIDE: ${{ inputs.high_water_override }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
@@ -45,12 +51,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write # WIF
     env:
-      MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-      FDIC_DB_PATH: "md:fdic_bank_health"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
@@ -58,7 +70,7 @@ jobs:
       - name: Install Python project
         run: uv sync --locked
 
-      - name: Full ingestion into MotherDuck
+      - name: Full ingestion into BigQuery
         run: uv run python -m ingestion.run_all
 
   deploy:

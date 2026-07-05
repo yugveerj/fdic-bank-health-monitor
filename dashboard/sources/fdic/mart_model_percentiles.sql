@@ -1,1 +1,1 @@
-select * from mart_model_percentiles
+select * from analytics.mart_model_percentiles

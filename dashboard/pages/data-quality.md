@@ -102,7 +102,7 @@ from fdic.fct_bank_quarters
 ## Pipeline
 
 FDIC BankFind Suite API → raw response cache → keyed upserts into the warehouse
-(DuckDB / MotherDuck) → dbt staging, metrics, and peer-statistics models with
+(BigQuery) → dbt staging, metrics, and peer-statistics models with
 tests on every build → this static site, rebuilt from the warehouse on each
 deploy. Quarterly FDIC data lands roughly 60 days after quarter-end; the
 scheduled refresh picks up new quarters automatically.
@@ -113,7 +113,7 @@ scheduled refresh picks up new quarters automatically.
 - **[Repository](https://github.com/yugveerj/fdic-bank-health-monitor)** — code,
   test history, and the running log of what the tests caught (README).
 
-![Architecture: FDIC and FRED APIs feed cached Python ingestion into a MotherDuck warehouse, dbt builds the models, and Evidence publishes a static site to GitHub Pages, all orchestrated by GitHub Actions](https://raw.githubusercontent.com/yugveerj/fdic-bank-health-monitor/main/docs/architecture.png)
+![Architecture: FDIC and FRED APIs feed cached Python ingestion into a BigQuery warehouse, dbt builds the models, and Evidence publishes a static site to GitHub Pages, all orchestrated by GitHub Actions](https://raw.githubusercontent.com/yugveerj/fdic-bank-health-monitor/main/docs/architecture.png)
 
 
 

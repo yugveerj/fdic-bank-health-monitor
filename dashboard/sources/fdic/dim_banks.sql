@@ -1,1 +1,1 @@
-select * from dim_banks
+select * from analytics.dim_banks

@@ -18,8 +18,8 @@ import sys
 import httpx
 from dotenv import load_dotenv
 
+from ingestion.bq import connect, max_value
 from ingestion.config import BASE_URL, MIN_ASSET_THOUSANDS
-from ingestion.db import connect
 
 log = logging.getLogger(__name__)
 
@@ -45,11 +45,11 @@ def warehouse_high_water() -> str:
     if override:
         log.warning("using high-water OVERRIDE %s (dispatch test mode)", override)
         return override
-    con = connect()
+    wh = connect()
     try:
-        return con.execute("SELECT max(REPDTE) FROM raw_fdic_financials").fetchone()[0]
+        return max_value(wh, "raw_fdic_financials", "REPDTE")
     finally:
-        con.close()
+        wh.close()
 
 
 def main() -> int:

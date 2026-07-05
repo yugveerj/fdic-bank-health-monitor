@@ -1,1 +1,1 @@
-select * from mart_outlier_flags
+select * from analytics.mart_outlier_flags

@@ -1,7 +1,7 @@
 # Rebuild and deploy the site FROM THE WAREHOUSE — no FDIC API calls here.
-# Pushes to main rebuild models/docs/dashboard against MotherDuck as-is;
-# only the refresh workflow (schedule / manual) re-ingests source data and
-# then calls this one.
+# Pushes to main rebuild models/docs/dashboard against BigQuery as-is;
+# only the refresh workflows (schedule / manual) re-ingest source data and
+# then call this one.
 name: Deploy dashboard
 
 on:
@@ -15,12 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write # WIF
     env:
-      MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-      FDIC_DB_PATH: "md:fdic_bank_health"
-      DBT_TARGET: md
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+      DBT_TARGET: prod
     steps:
       - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
@@ -36,8 +42,8 @@ jobs:
         working-directory: dbt
         run: DBT_PROFILES_DIR=. uv run dbt docs generate --static
 
-      - name: Export dashboard marts from the warehouse
-        run: uv run python -m scripts.export_dashboard_db
+      - name: Build site meta + quality tables
+        run: uv run python -m scripts.build_site_meta
 
       - uses: actions/setup-node@v4
         with:

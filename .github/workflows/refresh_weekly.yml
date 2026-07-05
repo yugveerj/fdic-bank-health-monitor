@@ -12,12 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write # WIF
     env:
-      MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-      FDIC_DB_PATH: "md:fdic_bank_health"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
@@ -25,7 +31,7 @@ jobs:
       - name: Install Python project
         run: uv sync --locked
 
-      - name: Ingest FRED H.8 into MotherDuck
+      - name: Ingest FRED H.8 into BigQuery
         run: uv run python -m ingestion.fred_h8
 
       # surface a stale feed instead of deploying old H.8 numbers silently;
@@ -35,7 +41,7 @@ jobs:
         working-directory: dbt
         continue-on-error: true
         env:
-          DBT_TARGET: md
+          DBT_TARGET: prod
         run: DBT_PROFILES_DIR=. uv run dbt source freshness --select source:raw_fdic.raw_fred_h8
 
   deploy:
