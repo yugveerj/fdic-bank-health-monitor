@@ -76,6 +76,13 @@ def test_float_nan_vs_value_fails():
     assert compare_mart("m", old, new, ["cert"])["problems"]
 
 
+def test_worst_offender_is_reported_not_first():
+    old = pd.DataFrame({"cert": [1, 2, 3], "x": [1.0, 1.0, 1.0]})
+    new = pd.DataFrame({"cert": [1, 2, 3], "x": [1.0 + 1e-6, 1.0, 1.3]})
+    r = compare_mart("m", old, new, ["cert"])
+    assert "worst at 3" in r["problems"][0]
+
+
 def test_nullable_int_vs_plain_int_passes():
     old = pd.DataFrame({"cert": [1], "n": pd.array([5], dtype="Int64")})
     new = pd.DataFrame({"cert": [1], "n": [5]})

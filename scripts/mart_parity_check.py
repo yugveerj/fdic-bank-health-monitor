@@ -101,7 +101,12 @@ def compare_mart(mart: str, old: pd.DataFrame, new: pd.DataFrame, keys: list[str
             finite = diffs[~np.isnan(diffs)]
             max_float_diff = max(max_float_diff, float(finite.max()) if len(finite) else 0.0)
             if not ok.all():
-                i = int(np.argmin(ok))
+                # the genuinely worst failing cell; NaN-vs-value failures have
+                # no magnitude, so fall back to the first failure if that's all
+                ranked = np.where(np.isnan(diffs) | ok, -np.inf, diffs)
+                i = int(np.argmax(ranked))
+                if not np.isfinite(ranked[i]):
+                    i = int(np.argmin(ok))
                 result["problems"].append(
                     f"{col}: {int((~ok).sum())} cells beyond {ATOL} "
                     f"(worst at {old.index[i]}: {av[i]!r} vs {bv[i]!r})"

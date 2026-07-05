@@ -29,6 +29,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
 log = logging.getLogger(__name__)
@@ -292,7 +293,10 @@ def main() -> int:
     cfg = _env()
     client = bigquery.Client(project=cfg["project"])
     try:
-        tables = {t.table_id for t in client.list_tables(cfg["prod"])}
+        try:
+            tables = {t.table_id for t in client.list_tables(cfg["prod"])}
+        except NotFound:
+            tables = set()
         if "mart_outlier_flags" not in tables:
             log.error("no marts in dataset %s — run dbt build first", cfg["prod"])
             return 1
