@@ -4,7 +4,7 @@ sidebar_position: 7
 ---
 
 <Alert status=warning>
-**None of this is this site's traffic.** Every number on this page comes from
+<b>None of this is this site's traffic.</b> Every number on this page comes from
 Google's obfuscated GA4 ecommerce sample — the Google Merchandise Store,
 November 2020 through January 2021. It exists to exercise the GA4 staging
 models and marts end to end before the site's own analytics property (Phase E)
