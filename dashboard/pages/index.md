@@ -36,7 +36,10 @@ Citibank as failed, which is why this pipeline
 Start at the [peer-group explorer](/peer-explorer) to calibrate what normal looks
 like inside each size band. Then the [outlier screen](/outlier-screen) ranks the
 current quarter across three bands, and any name that catches your eye has its
-full history on the [bank profile](/bank-profile).
+full history on the [bank profile](/bank-profile). The same peer statistics are
+also published as a
+[Tableau Public satellite](https://public.tableau.com/app/profile/yugveer.jain/viz/FDICBankHealthMonitorPeerSatellite/Peerexplorer),
+fed from the marts through a Google Sheet extract.
 
 ## The sector at a glance
 
