@@ -9,8 +9,15 @@ concurrency:
   group: v2-bigquery-validate
   cancel-in-progress: false
 
+# the push trigger (this file only) exists because GitHub never registers a
+# dispatch-only workflow that lives on a non-default branch — pushing the file
+# registers it, runs the gate once, and keeps it dispatchable afterwards
 on:
   workflow_dispatch:
+  push:
+    branches: [v2-bigquery]
+    paths:
+      - ".github/workflows/v2_validate.yml"
 
 jobs:
   validate:
