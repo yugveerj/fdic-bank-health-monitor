@@ -1,0 +1,751 @@
+<?xml version='1.0' encoding='utf-8' ?>
+
+<workbook original-version='18.1' source-platform='mac' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <preferences>
+    <preference name='ui.encoding.shelf.height' value='24' />
+    <preference name='ui.shelf.height' value='26' />
+  </preferences>
+  <datasources>
+    <datasource caption='peer_percentiles (FDIC)' inline='true' name='federated.0fdicpeer0000000000000000000' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='FDIC Bank Health Monitor' name='cloudfile:googledrive-excel-direct.0fdicpeerconn000000000000000'>
+            <connection class='cloudfile:googledrive-excel-direct' cleaning='no' cloudFileExtension='xlsx' cloudFileId='1SEiXqOMMtoUWezdZFc2l3cpsrDFmkWrvfN_x0k_AtaU' cloudFileMetadata_-_folder='root' cloudFileName='FDIC Bank Health Monitor.xlsx' cloudFileProvider='googledrive' cloudFileRequestURL='https://www.googleapis.com/drive/v3/files/1SEiXqOMMtoUWezdZFc2l3cpsrDFmkWrvfN_x0k_AtaU/export?mimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' compat='no' dataRefreshTime='' interpretationMode='0' server-oauth='server-custom' validate='no' workgroup-auth-mode='prompt' />
+          </named-connection>
+        </named-connections>
+        <relation connection='cloudfile:googledrive-excel-direct.0fdicpeerconn000000000000000' name='peer_percentiles' table='[&apos;peer_percentiles$&apos;]' type='table'>
+          <columns gridOrigin='A1:G14456:no:A1:G14456:0' header='yes' outcome='2'>
+            <column datatype='string' name='cert' ordinal='0' />
+            <column datatype='string' name='bank_name' ordinal='1' />
+            <column datatype='string' name='peer_band' ordinal='2' />
+            <column datatype='string' name='metric' ordinal='3' />
+            <column datatype='string' name='value' ordinal='4' />
+            <column datatype='string' name='robust_z' ordinal='5' />
+            <column datatype='string' name='peer_median' ordinal='6' />
+          </columns>
+        </relation>
+        <metadata-records>
+          <metadata-record class='column'>
+            <remote-name>cert</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[cert]</local-name>
+            <parent-name>[peer_percentiles]</parent-name>
+            <remote-alias>cert</remote-alias>
+            <ordinal>0</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>bank_name</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[bank_name]</local-name>
+            <parent-name>[peer_percentiles]</parent-name>
+            <remote-alias>bank_name</remote-alias>
+            <ordinal>1</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>peer_band</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[peer_band]</local-name>
+            <parent-name>[peer_percentiles]</parent-name>
+            <remote-alias>peer_band</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>metric</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[metric]</local-name>
+            <parent-name>[peer_percentiles]</parent-name>
+            <remote-alias>metric</remote-alias>
+            <ordinal>3</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>value</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[value]</local-name>
+            <parent-name>[peer_percentiles]</parent-name>
+            <remote-alias>value</remote-alias>
+            <ordinal>4</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>robust_z</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[robust_z]</local-name>
+            <parent-name>[peer_percentiles]</parent-name>
+            <remote-alias>robust_z</remote-alias>
+            <ordinal>5</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>peer_median</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[peer_median]</local-name>
+            <parent-name>[peer_percentiles]</parent-name>
+            <remote-alias>peer_median</remote-alias>
+            <ordinal>6</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+        </metadata-records>
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='Cert' datatype='integer' datatype-customized='true' name='[cert]' role='dimension' type='ordinal' />
+      <column caption='Bank name' datatype='string' name='[bank_name]' role='dimension' type='nominal' />
+      <column caption='Peer band' datatype='string' name='[peer_band]' role='dimension' type='nominal' />
+      <column caption='Metric' datatype='string' name='[metric]' role='dimension' type='nominal' />
+      <column caption='Value' datatype='real' datatype-customized='true' name='[value]' role='measure' type='quantitative' />
+      <column caption='Robust z' datatype='real' datatype-customized='true' name='[robust_z]' role='measure' type='quantitative' />
+      <column caption='Peer median' datatype='real' datatype-customized='true' name='[peer_median]' role='measure' type='quantitative' />
+      <column caption='Beyond 2 robust sigma' datatype='boolean' name='[Calculation_fdicbeyond2sigma0001]' role='dimension' type='nominal'>
+        <calculation class='tableau' formula='ABS([robust_z]) &gt;= 2' />
+      </column>
+      <column-instance column='[peer_band]' derivation='None' name='[none:peer_band:nk]' pivot='key' type='nominal' />
+      <column-instance column='[metric]' derivation='None' name='[none:metric:nk]' pivot='key' type='nominal' />
+      <column-instance column='[bank_name]' derivation='None' name='[none:bank_name:nk]' pivot='key' type='nominal' />
+      <column-instance column='[Calculation_fdicbeyond2sigma0001]' derivation='User' name='[usr:Calculation_fdicbeyond2sigma0001:nk]' pivot='key' type='nominal' />
+      <column-instance column='[value]' derivation='Avg' name='[avg:value:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[robust_z]' derivation='Avg' name='[avg:robust_z:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[peer_median]' derivation='Avg' name='[avg:peer_median:qk]' pivot='key' type='quantitative' />
+      <layout dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+      <style>
+        <style-rule element='mark'>
+          <encoding attr='color' field='[usr:Calculation_fdicbeyond2sigma0001:nk]' type='palette'>
+            <map to='#d73027'>
+              <bucket>true</bucket>
+            </map>
+            <map to='#b0b7bd'>
+              <bucket>false</bucket>
+            </map>
+          </encoding>
+        </style-rule>
+      </style>
+    </datasource>
+    <datasource caption='bank_trends (FDIC)' inline='true' name='federated.0fdictrend000000000000000000' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='FDIC Bank Health Monitor' name='cloudfile:googledrive-excel-direct.0fdictrendconn00000000000000'>
+            <connection class='cloudfile:googledrive-excel-direct' cleaning='no' cloudFileExtension='xlsx' cloudFileId='1SEiXqOMMtoUWezdZFc2l3cpsrDFmkWrvfN_x0k_AtaU' cloudFileMetadata_-_folder='root' cloudFileName='FDIC Bank Health Monitor.xlsx' cloudFileProvider='googledrive' cloudFileRequestURL='https://www.googleapis.com/drive/v3/files/1SEiXqOMMtoUWezdZFc2l3cpsrDFmkWrvfN_x0k_AtaU/export?mimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' compat='no' dataRefreshTime='' interpretationMode='0' server-oauth='server-custom' validate='no' workgroup-auth-mode='prompt' />
+          </named-connection>
+        </named-connections>
+        <relation connection='cloudfile:googledrive-excel-direct.0fdictrendconn00000000000000' name='bank_trends' table='[&apos;bank_trends$&apos;]' type='table'>
+          <columns gridOrigin='A1:O12453:no:A1:O12453:0' header='yes' outcome='2'>
+            <column datatype='string' name='cert' ordinal='0' />
+            <column datatype='string' name='bank_name' ordinal='1' />
+            <column datatype='string' name='report_date' ordinal='2' />
+            <column datatype='string' name='peer_band' ordinal='3' />
+            <column datatype='string' name='business_model' ordinal='4' />
+            <column datatype='string' name='total_assets_bn' ordinal='5' />
+            <column datatype='string' name='roa_pct' ordinal='6' />
+            <column datatype='string' name='net_interest_margin_pct' ordinal='7' />
+            <column datatype='string' name='equity_to_assets' ordinal='8' />
+            <column datatype='string' name='uninsured_deposit_share' ordinal='9' />
+            <column datatype='string' name='brokered_deposit_share' ordinal='10' />
+            <column datatype='string' name='securities_to_assets' ordinal='11' />
+            <column datatype='string' name='loans_to_deposits' ordinal='12' />
+            <column datatype='string' name='efficiency_ratio_pct' ordinal='13' />
+            <column datatype='string' name='noncurrent_loans_ratio_pct' ordinal='14' />
+          </columns>
+        </relation>
+        <metadata-records>
+          <metadata-record class='column'>
+            <remote-name>cert</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[cert]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>cert</remote-alias>
+            <ordinal>0</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>bank_name</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[bank_name]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>bank_name</remote-alias>
+            <ordinal>1</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>report_date</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[report_date]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>report_date</remote-alias>
+            <ordinal>2</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>peer_band</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[peer_band]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>peer_band</remote-alias>
+            <ordinal>3</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>business_model</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[business_model]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>business_model</remote-alias>
+            <ordinal>4</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>total_assets_bn</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[total_assets_bn]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>total_assets_bn</remote-alias>
+            <ordinal>5</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>roa_pct</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[roa_pct]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>roa_pct</remote-alias>
+            <ordinal>6</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>net_interest_margin_pct</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[net_interest_margin_pct]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>net_interest_margin_pct</remote-alias>
+            <ordinal>7</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>equity_to_assets</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[equity_to_assets]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>equity_to_assets</remote-alias>
+            <ordinal>8</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>uninsured_deposit_share</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[uninsured_deposit_share]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>uninsured_deposit_share</remote-alias>
+            <ordinal>9</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>brokered_deposit_share</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[brokered_deposit_share]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>brokered_deposit_share</remote-alias>
+            <ordinal>10</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>securities_to_assets</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[securities_to_assets]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>securities_to_assets</remote-alias>
+            <ordinal>11</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>loans_to_deposits</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[loans_to_deposits]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>loans_to_deposits</remote-alias>
+            <ordinal>12</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>efficiency_ratio_pct</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[efficiency_ratio_pct]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>efficiency_ratio_pct</remote-alias>
+            <ordinal>13</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+          <metadata-record class='column'>
+            <remote-name>noncurrent_loans_ratio_pct</remote-name>
+            <remote-type>130</remote-type>
+            <local-name>[noncurrent_loans_ratio_pct]</local-name>
+            <parent-name>[bank_trends]</parent-name>
+            <remote-alias>noncurrent_loans_ratio_pct</remote-alias>
+            <ordinal>14</ordinal>
+            <local-type>string</local-type>
+            <aggregation>Count</aggregation>
+            <contains-null>true</contains-null>
+          </metadata-record>
+        </metadata-records>
+      </connection>
+      <aliases enabled='yes' />
+      <column caption='Cert' datatype='integer' datatype-customized='true' name='[cert]' role='dimension' type='ordinal' />
+      <column caption='Bank name' datatype='string' name='[bank_name]' role='dimension' type='nominal' />
+      <column caption='Report date' datatype='date' datatype-customized='true' name='[report_date]' role='dimension' type='ordinal' />
+      <column caption='Peer band' datatype='string' name='[peer_band]' role='dimension' type='nominal' />
+      <column caption='Business model' datatype='string' name='[business_model]' role='dimension' type='nominal' />
+      <column caption='Total assets ($B)' datatype='real' datatype-customized='true' name='[total_assets_bn]' role='measure' type='quantitative' />
+      <column caption='ROA %' datatype='real' datatype-customized='true' name='[roa_pct]' role='measure' type='quantitative' />
+      <column caption='Net interest margin %' datatype='real' datatype-customized='true' name='[net_interest_margin_pct]' role='measure' type='quantitative' />
+      <column caption='Equity / assets' datatype='real' datatype-customized='true' name='[equity_to_assets]' role='measure' type='quantitative' />
+      <column caption='Uninsured deposit share' datatype='real' datatype-customized='true' name='[uninsured_deposit_share]' role='measure' type='quantitative' />
+      <column caption='Brokered deposit share' datatype='real' datatype-customized='true' name='[brokered_deposit_share]' role='measure' type='quantitative' />
+      <column caption='Securities / assets' datatype='real' datatype-customized='true' name='[securities_to_assets]' role='measure' type='quantitative' />
+      <column caption='Loans / deposits' datatype='real' datatype-customized='true' name='[loans_to_deposits]' role='measure' type='quantitative' />
+      <column caption='Efficiency ratio %' datatype='real' datatype-customized='true' name='[efficiency_ratio_pct]' role='measure' type='quantitative' />
+      <column caption='Noncurrent loans %' datatype='real' datatype-customized='true' name='[noncurrent_loans_ratio_pct]' role='measure' type='quantitative' />
+      <column-instance column='[bank_name]' derivation='None' name='[none:bank_name:nk]' pivot='key' type='nominal' />
+      <column-instance column='[report_date]' derivation='None' name='[none:report_date:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[total_assets_bn]' derivation='Avg' name='[avg:total_assets_bn:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[roa_pct]' derivation='Avg' name='[avg:roa_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[net_interest_margin_pct]' derivation='Avg' name='[avg:net_interest_margin_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[equity_to_assets]' derivation='Avg' name='[avg:equity_to_assets:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[uninsured_deposit_share]' derivation='Avg' name='[avg:uninsured_deposit_share:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[brokered_deposit_share]' derivation='Avg' name='[avg:brokered_deposit_share:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[securities_to_assets]' derivation='Avg' name='[avg:securities_to_assets:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[loans_to_deposits]' derivation='Avg' name='[avg:loans_to_deposits:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[efficiency_ratio_pct]' derivation='Avg' name='[avg:efficiency_ratio_pct:qk]' pivot='key' type='quantitative' />
+      <column-instance column='[noncurrent_loans_ratio_pct]' derivation='Avg' name='[avg:noncurrent_loans_ratio_pct:qk]' pivot='key' type='quantitative' />
+      <layout dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Distribution'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='peer_percentiles (FDIC)' name='federated.0fdicpeer0000000000000000000' />
+          </datasources>
+          <datasource-dependencies datasource='federated.0fdicpeer0000000000000000000'>
+            <column caption='Bank name' datatype='string' name='[bank_name]' role='dimension' type='nominal' />
+            <column caption='Peer band' datatype='string' name='[peer_band]' role='dimension' type='nominal' />
+            <column caption='Metric' datatype='string' name='[metric]' role='dimension' type='nominal' />
+            <column caption='Value' datatype='real' datatype-customized='true' name='[value]' role='measure' type='quantitative' />
+            <column caption='Robust z' datatype='real' datatype-customized='true' name='[robust_z]' role='measure' type='quantitative' />
+            <column caption='Peer median' datatype='real' datatype-customized='true' name='[peer_median]' role='measure' type='quantitative' />
+            <column caption='Beyond 2 robust sigma' datatype='boolean' name='[Calculation_fdicbeyond2sigma0001]' role='dimension' type='nominal'>
+              <calculation class='tableau' formula='ABS([robust_z]) &gt;= 2' />
+            </column>
+            <column-instance column='[bank_name]' derivation='None' name='[none:bank_name:nk]' pivot='key' type='nominal' />
+            <column-instance column='[peer_band]' derivation='None' name='[none:peer_band:nk]' pivot='key' type='nominal' />
+            <column-instance column='[metric]' derivation='None' name='[none:metric:nk]' pivot='key' type='nominal' />
+            <column-instance column='[Calculation_fdicbeyond2sigma0001]' derivation='User' name='[usr:Calculation_fdicbeyond2sigma0001:nk]' pivot='key' type='nominal' />
+            <column-instance column='[value]' derivation='Avg' name='[avg:value:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[peer_median]' derivation='Avg' name='[avg:peer_median:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[federated.0fdicpeer0000000000000000000].[none:peer_band:nk]' filter-group='3'>
+            <groupfilter function='member' level='[none:peer_band:nk]' member='&quot;$1B-$10B&quot;' user:ui-domain='database' user:ui-enumeration='inclusive' user:ui-marker='enumerate' />
+          </filter>
+          <filter class='categorical' column='[federated.0fdicpeer0000000000000000000].[none:metric:nk]' filter-group='4'>
+            <groupfilter function='member' level='[none:metric:nk]' member='&quot;uninsured_deposit_share&quot;' user:ui-domain='database' user:ui-enumeration='inclusive' user:ui-marker='enumerate' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Circle' />
+            <encodings>
+              <color column='[federated.0fdicpeer0000000000000000000].[usr:Calculation_fdicbeyond2sigma0001:nk]' />
+              <lod column='[federated.0fdicpeer0000000000000000000].[none:bank_name:nk]' />
+              <tooltip column='[federated.0fdicpeer0000000000000000000].[avg:peer_median:qk]' />
+            </encodings>
+          </pane>
+        </panes>
+        <rows />
+        <cols>[federated.0fdicpeer0000000000000000000].[avg:value:qk]</cols>
+      </table>
+      <simple-id uuid='{F1D10001-0000-4000-8000-000000000001}' />
+    </worksheet>
+    <worksheet name='Tails'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='peer_percentiles (FDIC)' name='federated.0fdicpeer0000000000000000000' />
+          </datasources>
+          <datasource-dependencies datasource='federated.0fdicpeer0000000000000000000'>
+            <column caption='Bank name' datatype='string' name='[bank_name]' role='dimension' type='nominal' />
+            <column caption='Peer band' datatype='string' name='[peer_band]' role='dimension' type='nominal' />
+            <column caption='Metric' datatype='string' name='[metric]' role='dimension' type='nominal' />
+            <column caption='Value' datatype='real' datatype-customized='true' name='[value]' role='measure' type='quantitative' />
+            <column caption='Robust z' datatype='real' datatype-customized='true' name='[robust_z]' role='measure' type='quantitative' />
+            <column-instance column='[bank_name]' derivation='None' name='[none:bank_name:nk]' pivot='key' type='nominal' />
+            <column-instance column='[peer_band]' derivation='None' name='[none:peer_band:nk]' pivot='key' type='nominal' />
+            <column-instance column='[metric]' derivation='None' name='[none:metric:nk]' pivot='key' type='nominal' />
+            <column-instance column='[value]' derivation='Avg' name='[avg:value:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[robust_z]' derivation='Avg' name='[avg:robust_z:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[federated.0fdicpeer0000000000000000000].[none:peer_band:nk]' filter-group='3'>
+            <groupfilter function='member' level='[none:peer_band:nk]' member='&quot;$1B-$10B&quot;' user:ui-domain='database' user:ui-enumeration='inclusive' user:ui-marker='enumerate' />
+          </filter>
+          <filter class='categorical' column='[federated.0fdicpeer0000000000000000000].[none:metric:nk]' filter-group='4'>
+            <groupfilter function='member' level='[none:metric:nk]' member='&quot;uninsured_deposit_share&quot;' user:ui-domain='database' user:ui-enumeration='inclusive' user:ui-marker='enumerate' />
+          </filter>
+          <filter class='quantitative' column='[federated.0fdicpeer0000000000000000000].[avg:robust_z:qk]' included-values='in-range'>
+            <min>2</min>
+          </filter>
+          <sort class='computed' column='[federated.0fdicpeer0000000000000000000].[none:bank_name:nk]' direction='DESC' using='[federated.0fdicpeer0000000000000000000].[avg:robust_z:qk]' />
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Text' />
+            <encodings>
+              <text column='[federated.0fdicpeer0000000000000000000].[avg:robust_z:qk]' />
+              <tooltip column='[federated.0fdicpeer0000000000000000000].[avg:value:qk]' />
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[federated.0fdicpeer0000000000000000000].[none:bank_name:nk]</rows>
+        <cols />
+      </table>
+      <simple-id uuid='{F1D10002-0000-4000-8000-000000000002}' />
+    </worksheet>
+    <worksheet name='Trend - size and capital'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='bank_trends (FDIC)' name='federated.0fdictrend000000000000000000' />
+          </datasources>
+          <datasource-dependencies datasource='federated.0fdictrend000000000000000000'>
+            <column caption='Bank name' datatype='string' name='[bank_name]' role='dimension' type='nominal' />
+            <column caption='Report date' datatype='date' datatype-customized='true' name='[report_date]' role='dimension' type='ordinal' />
+            <column caption='Total assets ($B)' datatype='real' datatype-customized='true' name='[total_assets_bn]' role='measure' type='quantitative' />
+            <column caption='Equity / assets' datatype='real' datatype-customized='true' name='[equity_to_assets]' role='measure' type='quantitative' />
+            <column-instance column='[bank_name]' derivation='None' name='[none:bank_name:nk]' pivot='key' type='nominal' />
+            <column-instance column='[report_date]' derivation='None' name='[none:report_date:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[total_assets_bn]' derivation='Avg' name='[avg:total_assets_bn:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[equity_to_assets]' derivation='Avg' name='[avg:equity_to_assets:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[federated.0fdictrend000000000000000000].[none:bank_name:nk]' filter-group='2'>
+            <groupfilter function='member' level='[none:bank_name:nk]' member='&quot;Silicon Valley Bank&quot;' user:ui-domain='database' user:ui-enumeration='inclusive' user:ui-marker='enumerate' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+          </pane>
+        </panes>
+        <rows>([federated.0fdictrend000000000000000000].[avg:total_assets_bn:qk] + [federated.0fdictrend000000000000000000].[avg:equity_to_assets:qk])</rows>
+        <cols>[federated.0fdictrend000000000000000000].[none:report_date:qk]</cols>
+      </table>
+      <simple-id uuid='{F1D10003-0000-4000-8000-000000000030}' />
+    </worksheet>
+    <worksheet name='Trend - funding and margin'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='bank_trends (FDIC)' name='federated.0fdictrend000000000000000000' />
+          </datasources>
+          <datasource-dependencies datasource='federated.0fdictrend000000000000000000'>
+            <column caption='Bank name' datatype='string' name='[bank_name]' role='dimension' type='nominal' />
+            <column caption='Report date' datatype='date' datatype-customized='true' name='[report_date]' role='dimension' type='ordinal' />
+            <column caption='Net interest margin %' datatype='real' datatype-customized='true' name='[net_interest_margin_pct]' role='measure' type='quantitative' />
+            <column caption='Uninsured deposit share' datatype='real' datatype-customized='true' name='[uninsured_deposit_share]' role='measure' type='quantitative' />
+            <column caption='Brokered deposit share' datatype='real' datatype-customized='true' name='[brokered_deposit_share]' role='measure' type='quantitative' />
+            <column-instance column='[bank_name]' derivation='None' name='[none:bank_name:nk]' pivot='key' type='nominal' />
+            <column-instance column='[report_date]' derivation='None' name='[none:report_date:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[uninsured_deposit_share]' derivation='Avg' name='[avg:uninsured_deposit_share:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[brokered_deposit_share]' derivation='Avg' name='[avg:brokered_deposit_share:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[net_interest_margin_pct]' derivation='Avg' name='[avg:net_interest_margin_pct:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[federated.0fdictrend000000000000000000].[none:bank_name:nk]' filter-group='2'>
+            <groupfilter function='member' level='[none:bank_name:nk]' member='&quot;Silicon Valley Bank&quot;' user:ui-domain='database' user:ui-enumeration='inclusive' user:ui-marker='enumerate' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+          </pane>
+        </panes>
+        <rows>([federated.0fdictrend000000000000000000].[avg:uninsured_deposit_share:qk] + [federated.0fdictrend000000000000000000].[avg:brokered_deposit_share:qk] + [federated.0fdictrend000000000000000000].[avg:net_interest_margin_pct:qk])</rows>
+        <cols>[federated.0fdictrend000000000000000000].[none:report_date:qk]</cols>
+      </table>
+      <simple-id uuid='{F1D10004-0000-4000-8000-000000000040}' />
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard enable-sort-zone-taborder='true' name='Peer explorer'>
+      <style />
+      <size maxheight='900' maxwidth='1100' minheight='900' minwidth='1100' sizing-mode='fixed' />
+      <zones>
+        <zone h='100000' id='20' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='96800' id='21' param='vert' type-v2='layout-flow' w='98700' x='650' y='1600'>
+            <zone h='42000' id='22' param='horz' type-v2='layout-flow' w='98700' x='650' y='1600'>
+              <zone h='42000' id='23' name='Distribution' show-title='true' w='72000' x='650' y='1600'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+              </zone>
+              <zone fixed-size='200' h='42000' id='24' is-fixed='true' param='vert' type-v2='layout-flow' w='26700' x='72650' y='1600'>
+                <zone h='14000' id='25' name='Distribution' param='[federated.0fdicpeer0000000000000000000].[none:peer_band:nk]' type-v2='filter' w='26700' x='72650' y='1600'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+                <zone h='14000' id='26' name='Distribution' param='[federated.0fdicpeer0000000000000000000].[none:metric:nk]' type-v2='filter' w='26700' x='72650' y='15600'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+                <zone h='14000' id='27' name='Distribution' pane-specification-id='0' param='[federated.0fdicpeer0000000000000000000].[usr:Calculation_fdicbeyond2sigma0001:nk]' type-v2='color' w='26700' x='72650' y='29600'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+              </zone>
+            </zone>
+            <zone h='48800' id='28' name='Tails' show-title='true' w='98700' x='650' y='43600'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+            </zone>
+            <zone forceUpdate='true' h='6000' id='29' type-v2='text' w='98700' x='650' y='92400'>
+              <formatted-text>
+                <run fontcolor='#666666' fontname='Tableau Regular' fontsize='9'>Peer-relative statistics from public filings, never an assessment of any bank's condition. Source: FDIC BankFind Suite API. https://yugveerj.github.io/fdic-bank-health-monitor/</run>
+              </formatted-text>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+            </zone>
+          </zone>
+          <zone-style>
+            <format attr='border-color' value='#000000' />
+            <format attr='border-style' value='none' />
+            <format attr='border-width' value='0' />
+            <format attr='margin' value='8' />
+          </zone-style>
+        </zone>
+      </zones>
+      <simple-id uuid='{F1D1000A-0000-4000-8000-00000000000A}' />
+    </dashboard>
+    <dashboard enable-sort-zone-taborder='true' name='Bank profile'>
+      <style />
+      <size maxheight='900' maxwidth='1100' minheight='900' minwidth='1100' sizing-mode='fixed' />
+      <zones>
+        <zone h='100000' id='40' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='96800' id='41' param='vert' type-v2='layout-flow' w='98700' x='650' y='1600'>
+            <zone fixed-size='80' h='8000' id='42' is-fixed='true' name='Trend - size and capital' param='[federated.0fdictrend000000000000000000].[none:bank_name:nk]' type-v2='filter' w='98700' x='650' y='1600'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+            </zone>
+            <zone h='41400' id='43' name='Trend - size and capital' show-title='true' w='98700' x='650' y='9600'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+            </zone>
+            <zone h='41400' id='44' name='Trend - funding and margin' show-title='true' w='98700' x='650' y='51000'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+            </zone>
+            <zone forceUpdate='true' h='6000' id='45' type-v2='text' w='98700' x='650' y='92400'>
+              <formatted-text>
+                <run fontcolor='#666666' fontname='Tableau Regular' fontsize='9'>Peer-relative statistics from public filings, never an assessment of any bank's condition. Source: FDIC BankFind Suite API. https://yugveerj.github.io/fdic-bank-health-monitor/</run>
+              </formatted-text>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+            </zone>
+          </zone>
+          <zone-style>
+            <format attr='border-color' value='#000000' />
+            <format attr='border-style' value='none' />
+            <format attr='border-width' value='0' />
+            <format attr='margin' value='8' />
+          </zone-style>
+        </zone>
+      </zones>
+      <simple-id uuid='{F1D1000B-0000-4000-8000-00000000000B}' />
+    </dashboard>
+  </dashboards>
+  <windows source-height='51'>
+    <window class='worksheet' name='Distribution'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card pane-specification-id='0' param='[federated.0fdicpeer0000000000000000000].[usr:Calculation_fdicbeyond2sigma0001:nk]' type='color' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='Tails'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='Trend - size and capital'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='Trend - funding and margin'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+          <strip size='2147483647'>
+            <card type='rows' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='dashboard' maximized='true' name='Peer explorer'>
+      <active id='-1' />
+    </window>
+    <window class='dashboard' name='Bank profile'>
+      <active id='-1' />
+    </window>
+  </windows>
+</workbook>
