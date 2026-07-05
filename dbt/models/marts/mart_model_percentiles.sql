@@ -3,39 +3,47 @@
 -- The screen's composite does not read this table.
 
 with metrics as (
-    select f.*, m.business_model
+    -- fct already carries business_model (same int model, LEFT JOINed); the
+    -- except() avoids the duplicate column BigQuery rejects as ambiguous,
+    -- while the join keeps v1's inner-join row semantics exactly
+    select f.* except (business_model), m.business_model
     from {{ ref('fct_bank_quarters') }} f
     join {{ ref('int_business_models') }} m
       on m.cert = f.cert and m.report_date = f.report_date
 ),
 
 unpivoted as (
-    unpivot metrics
-    on
-        uninsured_deposit_share,
-        brokered_deposit_share,
-        securities_to_assets,
-        asset_growth_3y_cagr,
-        nim_trend_4q,
-        equity_to_assets,
-        loans_to_deposits,
-        roa_pct,
-        noncurrent_loans_ratio_pct,
-        efficiency_ratio_pct
-    into name metric value value
+    -- NULL values are excluded by default, same as mart_peer_percentiles
+    select *
+    from metrics unpivot (
+        value for metric in (
+            uninsured_deposit_share,
+            brokered_deposit_share,
+            securities_to_assets,
+            asset_growth_3y_cagr,
+            nim_trend_4q,
+            equity_to_assets,
+            loans_to_deposits,
+            roa_pct,
+            noncurrent_loans_ratio_pct,
+            efficiency_ratio_pct
+        )
+    )
 ),
 
 with_median as (
     select
         *,
-        median(value) over (partition by metric, report_date, business_model) as model_median
+        -- exact percentile, never APPROX_QUANTILES
+        percentile_cont(value, 0.5)
+            over (partition by metric, report_date, business_model) as model_median
     from unpivoted
 ),
 
 with_mad as (
     select
         *,
-        median(abs(value - model_median))
+        percentile_cont(abs(value - model_median), 0.5)
             over (partition by metric, report_date, business_model) as model_mad
     from with_median
 )

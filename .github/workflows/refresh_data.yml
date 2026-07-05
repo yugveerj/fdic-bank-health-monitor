@@ -1,4 +1,4 @@
-# Re-ingest FDIC data into MotherDuck, then rebuild and deploy the site.
+# Re-ingest FDIC data into BigQuery, then rebuild and deploy the site.
 # This is the ONLY workflow that calls the FDIC API. Manual for now; the
 # weekly/quarterly schedules attach here when automation ships.
 name: Refresh data
@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write # WIF
     env:
-      MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-      FDIC_DB_PATH: "md:fdic_bank_health"
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
       # without the FRED key run_all's fred_h8.ingest logs a warning, writes an
       # empty table, and returns 0 — a manual refresh would silently leave the
       # H.8 series stale. The weekly/quarterly schedules already pass it.
@@ -21,13 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
 
       - name: Install Python project
         run: uv sync --locked
 
-      - name: Ingest FDIC data into MotherDuck
+      - name: Ingest FDIC data into BigQuery
         run: uv run python -m ingestion.run_all
 
   deploy:

@@ -8,7 +8,7 @@
 -- and are excluded here, not in ingestion (the raw layer keeps everything).
 
 select
-    m.cert || '_' || strftime(m.report_date, '%Y%m%d') as bank_quarter_key,
+    cast(m.cert as string) || '_' || format_date('%Y%m%d', m.report_date) as bank_quarter_key,
     m.*,
     p.peer_band,
     bm.business_model,

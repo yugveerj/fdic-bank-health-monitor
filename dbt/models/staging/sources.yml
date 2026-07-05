@@ -3,11 +3,14 @@ version: 2
 sources:
   - name: raw_fdic
     description: Raw FDIC BankFind Suite API data, landed by ingestion/run_all.py
-    schema: main
+    # env-switchable so the backtest can point the whole project at its frozen
+    # raw copies (scripts/run_backtest.py) — same mechanism as v1, where the
+    # frozen .duckdb file carried its own raw tables
+    schema: "{{ env_var('BQ_RAW_DATASET', 'fdic_raw') }}"
     freshness:
       warn_after: {count: 130, period: day}   # quarterly data + ~60-day publication lag
       error_after: {count: 200, period: day}
-    loaded_at_field: "strptime(REPDTE, '%Y%m%d')"
+    loaded_at_field: "parse_timestamp('%Y%m%d', REPDTE)"
     tables:
       - name: raw_fdic_financials
         description: One row per bank-quarter, banks > $1B in any quarter since 2019-Q1
@@ -21,7 +24,7 @@ sources:
         description: Weekly FRED H.8 aggregates (series in docs/fred_h8_series.md)
         # H.8 publishes Fridays; a feed more than three weeks stale means the
         # weekly ingest quietly stopped landing observations.
-        loaded_at_field: "obs_date::timestamp"
+        loaded_at_field: "cast(obs_date as timestamp)"
         freshness:
           warn_after: {count: 10, period: day}
           error_after: {count: 21, period: day}

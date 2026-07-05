@@ -6,9 +6,9 @@ import logging
 
 import pandas as pd
 
+from ingestion.bq import upsert
 from ingestion.client import FdicClient
 from ingestion.config import INSTITUTION_FIELDS
-from ingestion.db import upsert
 
 log = logging.getLogger(__name__)
 
@@ -16,9 +16,9 @@ TABLE = "raw_fdic_institutions"
 KEYS = ["CERT"]
 
 
-def ingest(client: FdicClient, con) -> int:
+def ingest(client: FdicClient, wh) -> int:
     rows = client.fetch_all("/institutions", fields=INSTITUTION_FIELDS, sort_by="CERT")
     df = pd.DataFrame(rows).reindex(columns=INSTITUTION_FIELDS)
-    n = upsert(con, TABLE, df, KEYS)
+    n = upsert(wh, TABLE, df, KEYS)
     log.info("institutions: %d rows", n)
     return n

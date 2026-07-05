@@ -1,1 +1,1 @@
-select * from quality_status
+select * from analytics.quality_status

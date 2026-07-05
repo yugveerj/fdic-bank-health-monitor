@@ -31,8 +31,8 @@
 
   <text x="540" y="30" class="lane">WAREHOUSE + MODELS</text>
   <rect class="box" x="540" y="45" width="180" height="64" rx="10"/>
-  <text x="555" y="72" class="title">MotherDuck</text>
-  <text x="555" y="92" class="sub">DuckDB locally for dev</text>
+  <text x="555" y="72" class="title">BigQuery</text>
+  <text x="555" y="92" class="sub">raw + analytics datasets</text>
 
   <rect class="box" x="540" y="130" width="195" height="80" rx="10"/>
   <text x="555" y="157" class="title">dbt</text>
@@ -42,7 +42,7 @@
   <text x="790" y="30" class="lane">PUBLISH</text>
   <rect class="box accent" x="785" y="45" width="175" height="64" rx="10"/>
   <text x="805" y="72" class="title">Evidence build</text>
-  <text x="805" y="92" class="sub">marts exported to DuckDB file</text>
+  <text x="805" y="92" class="sub">reads BigQuery at build time</text>
 
   <rect class="box accent" x="790" y="130" width="160" height="64" rx="10"/>
   <text x="805" y="157" class="title">GitHub Pages</text>

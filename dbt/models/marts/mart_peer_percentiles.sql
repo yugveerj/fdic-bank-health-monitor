@@ -9,29 +9,36 @@ with metrics as (
 ),
 
 unpivoted as (
-    unpivot metrics
-    on
-        uninsured_deposit_share,
-        brokered_deposit_share,
-        securities_to_assets,
-        asset_growth_3y_cagr,
-        asset_growth_yoy,
-        deposit_growth_yoy,
-        nim_trend_4q,
-        equity_to_assets,
-        loans_to_deposits,
-        roa_pct,
-        noncurrent_loans_ratio_pct,
-        net_chargeoffs_ratio_pct,
-        cost_of_funds_pct,
-        efficiency_ratio_pct
-    into name metric value value
+    -- NULL values are excluded by default — that default is what keeps every
+    -- downstream median, MAD, and n_screen_metrics count honest
+    select *
+    from metrics unpivot (
+        value for metric in (
+            uninsured_deposit_share,
+            brokered_deposit_share,
+            securities_to_assets,
+            asset_growth_3y_cagr,
+            asset_growth_yoy,
+            deposit_growth_yoy,
+            nim_trend_4q,
+            equity_to_assets,
+            loans_to_deposits,
+            roa_pct,
+            noncurrent_loans_ratio_pct,
+            net_chargeoffs_ratio_pct,
+            cost_of_funds_pct,
+            efficiency_ratio_pct
+        )
+    )
 ),
 
 with_median as (
     select
         *,
-        median(value) over (partition by metric, report_date, peer_band) as peer_median
+        -- exact percentile, never APPROX_QUANTILES: approximation would
+        -- silently shift ranks
+        percentile_cont(value, 0.5)
+            over (partition by metric, report_date, peer_band) as peer_median
     from unpivoted
     where peer_band is not null
 ),
@@ -39,7 +46,7 @@ with_median as (
 with_mad as (
     select
         *,
-        median(abs(value - peer_median))
+        percentile_cont(abs(value - peer_median), 0.5)
             over (partition by metric, report_date, peer_band) as peer_mad
     from with_median
 )

@@ -1,1 +1,1 @@
-select * from mart_peer_percentiles
+select * from analytics.mart_peer_percentiles

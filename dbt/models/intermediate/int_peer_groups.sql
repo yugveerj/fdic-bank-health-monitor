@@ -5,8 +5,8 @@ select
     cert,
     report_date,
     case
-        when total_assets >= 100_000_000 then '>$100B'
-        when total_assets >= 10_000_000  then '$10B-$100B'
-        when total_assets >= 1_000_000   then '$1B-$10B'
+        when total_assets >= 100000000 then '>$100B'
+        when total_assets >= 10000000  then '$10B-$100B'
+        when total_assets >= 1000000   then '$1B-$10B'
     end as peer_band
 from {{ ref('stg_fdic__financials') }}

@@ -4,7 +4,7 @@
 
 A public dashboard that scores every US bank over $1B in assets against its
 size peers each quarter, and a point-in-time backtest of the method against
-the banks that failed in 2023. FDIC API → Python → DuckDB/MotherDuck → dbt →
+the banks that failed in 2023. FDIC API → Python → BigQuery → dbt →
 Evidence, published on GitHub Pages and refreshed by CI with no manual steps.
 
 **Live dashboard:** <https://yugveerj.github.io/fdic-bank-health-monitor/>
@@ -117,7 +117,7 @@ against BankFind's own CSV exports, and all sixty matched. It's all in
 
 ## Architecture
 
-![Architecture: FDIC and FRED APIs into cached Python ingestion, MotherDuck warehouse, dbt models, Evidence static build on GitHub Pages, all orchestrated by GitHub Actions](docs/architecture.png)
+![Architecture: FDIC and FRED APIs into cached Python ingestion, BigQuery warehouse, dbt models, Evidence static build on GitHub Pages, all orchestrated by GitHub Actions](docs/architecture.png)
 
 Ingestion is idempotent: a second full ingest leaves every table's row count
 unchanged (27,836 institutions, 28,369 bank-quarters, 4,115 failure records
@@ -129,18 +129,21 @@ so nothing on the dashboard is typed in by hand.
 
 ```bash
 uv sync                                        # Python env (uv installs the pinned 3.13)
+gcloud auth application-default login          # BigQuery auth, once (see .env.example)
 uv run python -m ingestion.run_all             # full ingestion (idempotent, safe to re-run)
-cd dbt && DBT_PROFILES_DIR=. uv run dbt build  # models + tests (local DuckDB by default)
-cd .. && uv run python -m scripts.export_dashboard_db   # marts -> dashboard source
+cd dbt && DBT_PROFILES_DIR=. uv run dbt build  # models + tests (dev dataset by default)
+cd .. && uv run python -m scripts.build_site_meta       # freshness + quality tables
 cd dashboard && npm run sources && npm run dev # local dashboard preview
 uv run python -m scripts.run_backtest          # reproduce the 2023 backtest + proof
 ```
 
-In CI the same steps run against MotherDuck (`DBT_TARGET=md`); pushes rebuild
-the site from the warehouse, and only the scheduled or manual refresh
-re-ingests from the FDIC API. Pull requests run the full dbt build against a
-committed sample of real API rows, so they never need secrets or network
-access to the FDIC.
+In CI the same steps run keyless: GitHub Actions authenticates to BigQuery
+through Workload Identity Federation, so no service-account key exists
+anywhere. Pushes rebuild the site from the warehouse (`DBT_TARGET=prod`),
+and only the scheduled or manual refresh re-ingests from the FDIC API. Pull
+requests run the full dbt build and backtest against a committed sample of
+real API rows loaded into throwaway datasets that are deleted when the run
+ends.
 
 Copy `.env.example` to `.env` and fill in your keys. Nothing secret is
 committed.
@@ -149,6 +152,9 @@ committed.
 
 One line per decision; full rationales in [docs/decisions.md](docs/decisions.md).
 
+- The warehouse is BigQuery (2026-07-05). Re-platformed from
+  DuckDB/MotherDuck with an exact parity gate: the 2023 backtest ranks
+  reproduce to the row, marts agree within 1e-9.
 - Hosting is open-source Evidence, static-built onto GitHub Pages
   (2026-07-03). Evidence Cloud's free tier was discontinued.
 - Python is pinned to 3.13 (2026-07-03). dbt-core blocks 3.14 until dbt v2.0.

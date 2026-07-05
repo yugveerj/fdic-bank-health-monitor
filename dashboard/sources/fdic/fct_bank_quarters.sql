@@ -1,1 +1,1 @@
-select * from fct_bank_quarters
+select * from analytics.fct_bank_quarters

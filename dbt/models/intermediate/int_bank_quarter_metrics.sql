@@ -11,15 +11,22 @@
 with financials as (
     select
         *,
-        year(report_date) * 4 + quarter(report_date) as quarter_index
+        extract(year from report_date) * 4 + extract(quarter from report_date) as quarter_index
     from {{ ref('stg_fdic__financials') }}
 ),
 
 with_trend as (
     select
         *,
-        regr_slope(net_interest_margin_pct, quarter_index) over trailing_4q as nim_slope_raw,
-        count(net_interest_margin_pct) over trailing_4q                     as nim_obs_4q
+        -- regr_slope, spelled out (BigQuery lacks the aggregate): slope is
+        -- covar_pop/var_pop over the frame. Exact wherever nim_trend_4q is
+        -- exposed — the nim_obs_4q = 4 guard below means every row in the
+        -- frame has a non-null NIM, which is the population regr_slope sees.
+        safe_divide(
+            covar_pop(net_interest_margin_pct, quarter_index) over trailing_4q,
+            var_pop(quarter_index) over trailing_4q
+        )                                                   as nim_slope_raw,
+        count(net_interest_margin_pct) over trailing_4q     as nim_obs_4q
     from financials
     window trailing_4q as (
         partition by cert
