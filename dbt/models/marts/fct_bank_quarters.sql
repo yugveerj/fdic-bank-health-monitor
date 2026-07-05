@@ -2,6 +2,18 @@
 -- likely_merger_quarter flags step-change growth (>25% QoQ) so peer statistics
 -- and the backtest can distinguish acquisitions from organic growth.
 --
+-- Incremental by MERGE on the grain, with no is_incremental() lookback filter
+-- on purpose: FDIC amendments restate old quarters in place, and a lookback
+-- would silently miss them. Every run merges the full source, so the result
+-- is identical to a table rebuild — the incremental machinery is
+-- pattern-practice at this scale, honestly labeled (see decisions.md).
+
+{{ config(
+    materialized='incremental',
+    incremental_strategy='merge',
+    unique_key=['cert', 'report_date'],
+) }}
+--
 -- The semi-join on institutions defines the analytical universe: a handful of
 -- insured filers (foreign-bank US branches, a clearing trust) report financials
 -- but have no institutions record — they aren't peer-comparable US bank charters

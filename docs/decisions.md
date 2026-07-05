@@ -4,6 +4,22 @@ Architecture-level decisions and the reasoning behind them, newest first. The
 README carries a one-line version of each; this file is the full account. Each
 entry records what I chose, what I tried first, and what broke along the way.
 
+## 2026-07-05 — fct_bank_quarters is incremental, and admits it doesn't need to be
+
+The workhorse mart is materialized as a dbt incremental model — MERGE on the
+(cert, report_date) grain — with partitioning by report date and clustering
+by cert. At this project's scale, a few megabytes, none of that buys
+measurable performance: a full rebuild costs the same pennies. It's the
+pattern that matters on a warehouse where these choices are how real cost
+problems get solved, so it ships honestly labeled as pattern-practice.
+
+One deliberate deviation from the textbook incremental: there is no
+is_incremental() lookback filter. FDIC amendments restate old quarters in
+place, and a "only new quarters" filter would silently miss them. Every run
+merges the full source instead, which makes the output identical to a table
+rebuild by construction — the parity that matters — while still exercising
+the MERGE machinery end to end.
+
 ## 2026-07-05 — Sector forecasts: fixed candidates, a baseline that can win
 
 The forecasting module (v2 Phase D) had three design decisions worth
