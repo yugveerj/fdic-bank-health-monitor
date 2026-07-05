@@ -9,11 +9,11 @@ select
     ZIP                                              as zip,
     cast(ACTIVE as integer) = 1                      as is_active,
     BKCLASS                                          as bank_class,
-    try_cast(strptime(ESTYMD, '%m/%d/%Y') as date)   as established_date,
-    try_cast(strptime(ENDEFYMD, '%m/%d/%Y') as date) as end_of_existence_date,
+    parse_date('%m/%d/%Y', ESTYMD)                   as established_date,
+    parse_date('%m/%d/%Y', ENDEFYMD)                 as end_of_existence_date,
     cast(CHANGEC1 as integer)                        as latest_change_code,
     cast(FED_RSSD as integer)                        as fed_rssd_id,
     WEBADDR                                          as website,
-    cast(ASSET as double)                            as current_assets,
-    cast(DEP as double)                              as current_deposits
+    cast(ASSET as float64)                           as current_assets,
+    cast(DEP as float64)                             as current_deposits
 from {{ source('raw_fdic', 'raw_fdic_institutions') }}

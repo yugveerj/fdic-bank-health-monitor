@@ -4,7 +4,7 @@
 select
     series_id,
     series_title,
-    obs_date::date                    as obs_date,
-    try_cast(value as double)         as value_billions
+    cast(obs_date as date)            as obs_date,
+    safe_cast(value as float64)       as value_billions
 from {{ source('raw_fdic', 'raw_fred_h8') }}
-where try_cast(value as double) is not null
+where safe_cast(value as float64) is not null

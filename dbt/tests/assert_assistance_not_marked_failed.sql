@@ -11,7 +11,7 @@ with assistance_only as (
     from {{ ref('stg_fdic__failures') }}
     where cert is not null
     group by cert
-    having count(*) filter (where resolution_type = 'FAILURE') = 0
+    having countif(resolution_type = 'FAILURE') = 0
 )
 
 select d.cert, d.bank_name

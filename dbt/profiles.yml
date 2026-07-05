@@ -1,18 +1,30 @@
-# Target switches by env var so the same project builds locally and in CI:
-#   local (default) -> ../warehouse.duckdb
-#   md              -> MotherDuck, token from MOTHERDUCK_TOKEN
+# BigQuery targets, all env-var-driven. Auth is Application Default
+# Credentials everywhere: `gcloud auth application-default login` locally,
+# Workload Identity Federation in CI — dbt's `oauth` method picks up both.
+# Dataset names per PROJECT_SPEC_V2.md §2: dbt_dev (dev), analytics (prod
+# marts); the backtest target builds into its own disposable dataset.
+
 fdic_bank_health:
-  target: "{{ env_var('DBT_TARGET', 'local') }}"
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
   outputs:
-    local:
-      type: duckdb
-      path: "../warehouse.duckdb"
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT') }}"
+      dataset: dbt_dev
+      location: US
       threads: 4
-    md:
-      type: duckdb
-      path: "md:fdic_bank_health?motherduck_token={{ env_var('MOTHERDUCK_TOKEN') }}"
+    prod:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT') }}"
+      dataset: analytics
+      location: US
       threads: 4
     backtest:
-      type: duckdb
-      path: "{{ env_var('BACKTEST_DB_PATH', '../backtest.duckdb') }}"
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT') }}"
+      dataset: "{{ env_var('BACKTEST_DATASET', 'dbt_backtest') }}"
+      location: US
       threads: 4

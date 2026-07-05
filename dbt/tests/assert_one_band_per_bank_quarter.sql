@@ -3,5 +3,5 @@
 
 select cert, report_date, total_assets, peer_band
 from {{ ref('fct_bank_quarters') }}
-where total_assets >= 1_000_000
+where total_assets >= 1000000
   and peer_band is null

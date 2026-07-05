@@ -14,3 +14,8 @@ models:
       +materialized: view
     marts:
       +materialized: table
+      # partition + cluster on the workhorse table: at megabyte scale this is
+      # pattern-practice rather than a performance need — see decisions.md
+      fct_bank_quarters:
+        +partition_by: {field: report_date, data_type: date}
+        +cluster_by: [cert]
