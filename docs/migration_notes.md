@@ -40,6 +40,7 @@ and why each change is semantics-preserving.
 | --- | --- | --- | --- |
 | fct_bank_quarters.sql | `m.cert \|\| '_' \|\| strftime(m.report_date, '%Y%m%d')` | `cast(m.cert as string) \|\| '_' \|\| format_date('%Y%m%d', m.report_date)` | strftime doesn't exist and BigQuery `\|\|` won't coerce INT64; FORMAT_DATE keeps zero-padding, so keys are byte-identical |
 | mart_peer_percentiles.sql, mart_model_percentiles.sql | `unpivot metrics on … into name metric value value` | `select * from metrics unpivot (value for metric in (…))` | DuckDB's standalone UNPIVOT statement → BigQuery's FROM-clause operator. Both exclude NULLs by default — that default is load-bearing (row counts feed every median/MAD and n_screen_metrics) |
+| mart_model_percentiles.sql | `select f.*, m.business_model` | `select f.* except (business_model), m.business_model` | found by the first live build, not the audit: fct already carries business_model, so `f.*` duplicated it — DuckDB tolerated the ambiguity, BigQuery errors. except() removes the duplicate; the inner join's row semantics are untouched |
 | mart_peer_percentiles.sql ×2, mart_model_percentiles.sql ×2 | `median(x) over (partition by …)` | `percentile_cont(x, 0.5) over (partition by …)` | BigQuery has no MEDIAN. Exact PERCENTILE_CONT window, **never APPROX_QUANTILES** (hard rule). DuckDB MEDIAN is quantile_cont(0.5): both linearly interpolate at even n, so values are bit-comparable. BigQuery's window PERCENTILE_CONT allows PARTITION BY only — these usages comply |
 
 ### dbt tests + config

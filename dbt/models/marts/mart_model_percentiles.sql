@@ -3,7 +3,10 @@
 -- The screen's composite does not read this table.
 
 with metrics as (
-    select f.*, m.business_model
+    -- fct already carries business_model (same int model, LEFT JOINed); the
+    -- except() avoids the duplicate column BigQuery rejects as ambiguous,
+    -- while the join keeps v1's inner-join row semantics exactly
+    select f.* except (business_model), m.business_model
     from {{ ref('fct_bank_quarters') }} f
     join {{ ref('int_business_models') }} m
       on m.cert = f.cert and m.report_date = f.report_date
