@@ -4,6 +4,45 @@ Architecture-level decisions and the reasoning behind them, newest first. The
 README carries a one-line version of each; this file is the full account. Each
 entry records what I chose, what I tried first, and what broke along the way.
 
+## 2026-07-05 — GA4 telemetry: production-only gtag, five events, no PII
+
+The site now carries Google Analytics (property FDIC Bank Health Monitor,
+G-44RCFYRK9W) with a daily BigQuery export into the same `fdic-monitor`
+project, so usage data accrues in the warehouse the rest of the stack already
+reads. Three choices worth recording. The gtag loader is gated on the
+production hostname: local dev and previews send nothing, which keeps the
+data clean without a separate debug property. The five custom events (see
+[event_dictionary.md](event_dictionary.md)) are wired as two delegated
+capture-phase listeners in the Evidence layout rather than per-component
+hooks — Evidence's dropdowns are library internals I don't control, and the
+capture phase is the only moment the open dropdown (which is what names the
+event) is still in the DOM. And `bank_selected` reports the institution's
+display label, not the cert the dictionary originally planned: the cert
+never reaches the DOM the listener can see, and the label is the same public
+FDIC data. The staging model for the export ships disabled behind a dbt var
+until the first daily export materializes the dataset; flipping it on is a
+one-line change documented in the source definition.
+
+## 2026-07-05 — Product analytics ships against Google's sample first
+
+Phase F's marts (sessions, funnel, retention cohorts, channels, attribution)
+run today against `bigquery-public-data.ga4_obfuscated_sample_ecommerce`
+through the same normalizing macro the own-property export will use — the
+point is that when our export accrues, the models are already tested. Two
+findings from building it. The sample's earliest weeks contain purchases but
+almost no `add_to_cart` events (an instrumentation gap in Google's data, not
+a join bug — verified against the raw shards), so the funnel is closed: a
+session counts toward a stage if it fired that stage's event or any deeper
+one, and the monotonicity test stays strict. And GA4's `traffic_source`
+struct is user-scoped first-touch, which is exactly what makes the
+first-touch vs last-touch attribution comparison honest: the two columns
+come from genuinely different scopes of the same purchase sessions, and a
+data test asserts their totals match to the cent. The experiment write-up
+([experiment_sample.md](experiment_sample.md)) pairs an A/A test on the real
+hash split (null, as it should be) with a seeded synthetic lift labeled as
+such everywhere — the detected effect exists because the script put it
+there.
+
 ## 2026-07-05 — fct_bank_quarters is incremental, and admits it doesn't need to be
 
 The workhorse mart is materialized as a dbt incremental model — MERGE on the

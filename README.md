@@ -124,9 +124,19 @@ against BankFind's own CSV exports, and all sixty matched. It's all in
 
 Ingestion is idempotent: a second full ingest leaves every table's row count
 unchanged (27,836 institutions, 28,369 bank-quarters, 4,115 failure records
-at last full check), because loads are keyed upserts. dbt runs 29 data tests
+at last full check), because loads are keyed upserts. dbt runs 43 data tests
 on every build, and the site is rebuilt from the warehouse on every deploy,
 so nothing on the dashboard is typed in by hand.
+
+The loop closes on the right of the diagram: the site carries anonymous GA4
+telemetry (page views plus the five events in
+[docs/event_dictionary.md](docs/event_dictionary.md)) whose daily export
+lands back in the same BigQuery project. Until enough of it accrues, the
+[product analytics page](https://yugveerj.github.io/fdic-bank-health-monitor/product-analytics)
+runs the identical staging macro and marts against Google's public GA4
+ecommerce sample — sessions, funnel, retention cohorts, channels, and a
+first-touch vs last-touch attribution comparison — with a
+[powered experiment write-up](docs/experiment_sample.md) beside it.
 
 ## How to run
 
@@ -136,7 +146,8 @@ gcloud auth application-default login          # BigQuery auth, once (see .env.e
 uv run python -m ingestion.run_all             # full ingestion (idempotent, safe to re-run)
 cd dbt && DBT_PROFILES_DIR=. uv run dbt build  # models + tests (dev dataset by default)
 cd .. && uv run python -m scripts.build_site_meta       # freshness + quality tables
-cd dashboard && npm run sources && npm run dev # local dashboard preview
+cd dashboard && npm run sources && npm run dev # local dashboard preview (Node 22 — the
+                                               # BigQuery connector's token fetch breaks on 26)
 uv run python -m scripts.run_backtest          # reproduce the 2023 backtest + proof
 ```
 
@@ -168,3 +179,9 @@ One line per decision; full rationales in [docs/decisions.md](docs/decisions.md)
 - Bank profiles stay a single searchable page (2026-07-04). Per-bank
   templated routes prerender ~15,000 files, more than the GitHub Pages deploy
   can sync; real deep-links would need a host built for that file count.
+- GA4 loads only on the production hostname, and events carry no PII
+  (2026-07-05). The event dictionary is written before the code that fires it.
+- Product analytics shipped against Google's public GA4 sample first
+  (2026-07-05). Same macros and marts the own-property export will use; the
+  funnel is closed because the sample's early weeks lack add_to_cart while
+  purchases occur.
