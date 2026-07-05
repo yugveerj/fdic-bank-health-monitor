@@ -155,6 +155,65 @@ order by obs_date
 
 <LineChart data={h8} x=obs_date y=indexed series=series_title yFmt='#,##0' title="Indexed to the first 2024 week = 100"/>
 
+## Twelve weeks ahead
+
+A weekly forecast of the sector aggregates above — sector totals only, never
+individual banks. Each series is forecast by whichever method survived a
+rolling-origin backtest against a seasonal-naive baseline ("this year looks
+like last year"); where nothing beat the baseline, the baseline is published
+and the table below says so.
+
+```sql fc_series_list
+select distinct series_title from fdic.h8_forecasts order by 1
+```
+
+<Dropdown data={fc_series_list} name=fc_series value=series_title title="Series"/>
+
+```sql fc_fan
+-- six months of actuals, then the published 12-week path with its 95%
+-- interval as separate bound lines
+with recent as (
+    select try_cast(obs_date as date) as week,
+           try_cast(value_billions as double) as actual,
+           cast(null as double) as forecast,
+           cast(null as double) as lo_95,
+           cast(null as double) as hi_95
+    from fdic.fred_h8
+    where series_title = '${inputs.fc_series.value}'
+      and try_cast(obs_date as date) >= current_date - interval 180 day
+),
+path as (
+    select try_cast(forecast_week as date) as week,
+           cast(null as double) as actual,
+           try_cast(forecast as double) as forecast,
+           try_cast(lo_95 as double) as lo_95,
+           try_cast(hi_95 as double) as hi_95
+    from fdic.h8_forecasts
+    where series_title = '${inputs.fc_series.value}'
+)
+select * from recent union all select * from path order by week
+```
+
+<LineChart data={fc_fan} x=week y={['actual','forecast','lo_95','hi_95']} yFmt='#,##0' title="Billions of dollars: actuals, published forecast, 95% interval"/>
+
+```sql fc_backtest
+select series_title,
+       method,
+       round(mape, 2)  as "MAPE %",
+       round(smape, 2) as "sMAPE %",
+       n_origins       as "backtest origins",
+       case when published then 'published' else '' end as status
+from fdic.h8_forecast_backtest
+order by series_title, smape
+```
+
+<DataTable data={fc_backtest} rows=all title="Rolling-origin backtest — the published method has to earn it"/>
+
+Backtest mechanics: expanding training window starting at two years of
+weekly history, a new forecast origin every four weeks, twelve-week horizon,
+errors pooled across all origins. Recomputed every Saturday after the H.8
+release lands. These are statements about sector totals, not about any bank.
+
 ---
 
 Peer-relative statistics from public filings, never an assessment of any
