@@ -28,3 +28,22 @@ models:
         tests: [not_null]
       - name: obs_date
         tests: [not_null]
+
+  - name: stg_ga4_sample__events
+    description: >
+      Flattened GA4 events from Google's obfuscated ecommerce sample,
+      2020-11-01 to 2021-01-31. One row per event; session_key is null on
+      events without a ga_session_id param.
+    columns:
+      - name: event_date
+        tests: [not_null]
+      - name: event_ts
+        tests: [not_null]
+      - name: event_name
+        tests: [not_null]
+
+  - name: stg_ga4__events
+    description: >
+      Flattened GA4 events from the project's own property — identical shape
+      to stg_ga4_sample__events via the shared macro. Disabled until Phase E
+      flips the ga4_export_enabled var.

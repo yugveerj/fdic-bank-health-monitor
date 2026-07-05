@@ -1,0 +1,116 @@
+version: 2
+
+models:
+  - name: mart_ga4_sample_daily
+    description: >
+      Grain day. Traffic and commerce topline from session-grain inputs; a
+      session counts toward the day it started.
+    columns:
+      - name: date
+        description: Session start date.
+        tests: [unique, not_null]
+      - name: sessions
+        description: Sessions started this day.
+      - name: engaged_sessions
+        description: Sessions where GA4 marked session_engaged.
+      - name: users
+        description: Distinct users with a session this day.
+      - name: new_users
+        description: Distinct users whose first-ever session (ga_session_number = 1) was this day.
+      - name: pageviews
+        description: page_view events across the day's sessions.
+      - name: purchases
+        description: purchase events across the day's sessions.
+      - name: revenue_usd
+        description: Purchase revenue, USD; 0 on days without purchases.
+      - name: purchase_cvr
+        description: Share of sessions with at least one purchase — not purchases/sessions.
+
+  - name: mart_ga4_sample_funnel
+    description: >
+      Grain week (Monday-truncated). Closed view -> cart -> purchase funnel
+      counted over whole sessions — a session is in a stage if it fired that
+      stage's event or any deeper one, because the sample's early shards lack
+      add_to_cart while purchases still occur. Stage rates are conditional on
+      the prior stage. Edge weeks extend past the sample window — the
+      dashboard labels the window.
+    columns:
+      - name: week
+        description: Monday of the session-start week.
+        tests: [not_null]
+      - name: sessions
+        description: Sessions started this week.
+      - name: sessions_with_view
+        description: Sessions that reached the view stage — view_item or any deeper funnel event.
+      - name: sessions_with_cart
+        description: Sessions that reached the cart stage — add_to_cart, begin_checkout, or purchase.
+      - name: sessions_with_purchase
+        description: Sessions with at least one purchase.
+      - name: view_rate
+        description: sessions_with_view / sessions.
+      - name: cart_rate_of_views
+        description: sessions_with_cart / sessions_with_view.
+      - name: purchase_rate_of_carts
+        description: sessions_with_purchase / sessions_with_cart.
+      - name: overall_cvr
+        description: sessions_with_purchase / sessions.
+
+  - name: mart_ga4_sample_retention
+    description: >
+      Grain cohort_week x week_number (0..12). Weekly user retention; cohorts
+      are each user's first session week inside the sample window, so early
+      cohorts absorb returning users who look new (no pre-window history).
+    columns:
+      - name: cohort_week
+        description: Monday of the user's first session week in the window.
+        tests: [not_null]
+      - name: week_number
+        description: Weeks since the cohort week, 0 through 12.
+        tests: [not_null]
+      - name: cohort_size
+        description: Distinct users in the cohort.
+      - name: active_users
+        description: Cohort users with a session in this week.
+      - name: retention_pct
+        description: active_users / cohort_size; 1.0 at week 0 by construction.
+
+  - name: mart_ga4_sample_channels
+    description: >
+      Grain channel — the SESSION-scoped 'source / medium' label. The export's
+      session-scoped params are sparse, so '(direct) / (none)' is overweighted;
+      use mart_ga4_sample_attribution for first-touch views.
+    columns:
+      - name: channel
+        description: Session-scoped 'source / medium'; nulls collapsed to '(direct) / (none)'.
+        tests: [unique, not_null]
+      - name: sessions
+        description: Sessions on this channel.
+      - name: users
+        description: Distinct users with a session on this channel.
+      - name: purchases
+        description: purchase events on this channel's sessions.
+      - name: revenue_usd
+        description: Purchase revenue, USD; 0 where the channel has none.
+      - name: purchase_cvr
+        description: Share of the channel's sessions with at least one purchase.
+      - name: session_share
+        description: Channel's share of all sessions.
+
+  - name: mart_ga4_sample_attribution
+    description: >
+      Grain channel. The same purchase sessions attributed last-touch (the
+      purchase session's own channel) and first-touch (the user's original
+      acquisition channel). Column pairs conserve totals; zeros where a
+      channel has no purchases on that side.
+    columns:
+      - name: channel
+        description: "'source / medium' label; the two attribution views share it."
+        tests: [not_null]
+      - name: first_touch_purchases
+        description: purchase events credited to the buyer's first-touch channel.
+      - name: last_touch_purchases
+        description: purchase events credited to the purchase session's channel.
+      - name: first_touch_revenue_usd
+        description: Revenue credited first-touch, USD.
+      - name: last_touch_revenue_usd
+        description: Revenue credited last-touch, USD.

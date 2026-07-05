@@ -28,3 +28,29 @@ sources:
         freshness:
           warn_after: {count: 10, period: day}
           error_after: {count: 21, period: day}
+
+  - name: ga4_sample
+    description: >
+      Google's obfuscated GA4 ecommerce sample (Merchandise Store), a fixed
+      public dataset covering 2020-11-01 to 2021-01-31. Stands in for the
+      own-property export so the product-analytics models can be built and
+      tested before Phase E.
+    database: bigquery-public-data
+    schema: ga4_obfuscated_sample_ecommerce
+    freshness: null
+    tables:
+      - name: events
+        identifier: "events_*"
+        description: Sharded GA4 event export, one table per day.
+
+  - name: ga4_export
+    description: >
+      Own-property GA4 daily export. The dataset name is assigned by Google
+      when Phase E creates the property; until then the env var default is a
+      placeholder and the models reading this source stay disabled.
+    schema: "{{ env_var('GA4_EXPORT_DATASET', 'analytics_000000000') }}"
+    freshness: null
+    tables:
+      - name: events
+        identifier: "events_*"
+        description: Sharded GA4 event export, one table per day.
