@@ -34,6 +34,11 @@ jobs:
       - name: Ingest FRED H.8 into BigQuery
         run: uv run python -m ingestion.fred_h8
 
+      # sector-level forecasts only (hard rule) — recomputed weekly from the
+      # fresh H.8 observations, published per the beat-the-baseline rule
+      - name: Recompute sector forecasts
+        run: uv run python -m forecasting.h8_forecast
+
       # surface a stale feed instead of deploying old H.8 numbers silently;
       # non-blocking on purpose — stale macro series shouldn't hold back the
       # rest of the site, but the failed check flags the run for a look

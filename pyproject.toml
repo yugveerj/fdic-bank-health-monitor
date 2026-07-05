@@ -13,6 +13,7 @@ dependencies = [
     "pandas>=3.0.3",
     "pyarrow>=24.0.0",
     "python-dotenv>=1.2.2",
+    "statsmodels>=0.14.6",
 ]
 
 [dependency-groups]
