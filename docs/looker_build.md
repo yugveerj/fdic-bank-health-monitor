@@ -71,10 +71,13 @@ Every design decision made in advance; ~20 minutes.
 
 ## 4. Configure credentials + caching (once)
 
-Resource → Manage added data sources: each source should show **Owner's
-credentials** (default — it's what lets anonymous viewers see data). Leave
-data freshness at **12 hours**: it's the cache that keeps public viewers
-from spending BigQuery quota. Free-tier math: the marts are megabytes and
+Resource → Manage added data sources → EDIT each source: set **Data
+credentials** (top bar) to **Owner's credentials** — it's what lets
+anonymous viewers see data. Sources added in the report editor default to
+**Viewer's** credentials, which serves the public a Google sign-in wall;
+this bit us on the live report and had to be flipped on all four sources.
+Leave data freshness at **12 hours**: it's the cache that keeps public
+viewers from spending BigQuery quota. Free-tier math: the marts are megabytes and
 the free tier is 1 TiB of query processing a month — this rounds to $0.
 
 ## 5. Publish
