@@ -17,6 +17,7 @@ Usage: uv run python -m scripts.mart_parity_check
 
 from __future__ import annotations
 
+import datetime as dt
 import logging
 import os
 import sys
@@ -57,7 +58,18 @@ def _is_float(a: pd.Series, b: pd.Series) -> bool:
 
 
 def _as_objects(s: pd.Series) -> pd.Series:
-    return s.astype(object).where(s.notna(), None)
+    """Comparable object values: NULLs (NaN/NaT/pd.NA) become None and every
+    date-like becomes its ISO string — duckdb serves DATE columns as
+    datetime64 Timestamps while BigQuery serves date objects, and those never
+    compare equal however identical the dates."""
+    if str(s.dtype).startswith("datetime64") or str(s.dtype) == "dbdate":
+        return s.map(lambda v: None if pd.isna(v) else pd.Timestamp(v).date().isoformat())
+    out = s.astype(object).where(s.notna(), None)
+    return out.map(
+        lambda v: pd.Timestamp(v).date().isoformat()
+        if isinstance(v, (dt.date, dt.datetime, pd.Timestamp))
+        else v
+    )
 
 
 def compare_mart(mart: str, old: pd.DataFrame, new: pd.DataFrame, keys: list[str]) -> dict:
@@ -85,9 +97,9 @@ def compare_mart(mart: str, old: pd.DataFrame, new: pd.DataFrame, keys: list[str
             av = a.astype("float64").to_numpy()
             bv = b.astype("float64").to_numpy()
             ok = np.isclose(av, bv, rtol=0, atol=ATOL, equal_nan=True)
-            with np.errstate(invalid="ignore"):
-                worst = float(np.nanmax(np.abs(av - bv))) if len(av) else 0.0
-            max_float_diff = max(max_float_diff, 0.0 if np.isnan(worst) else worst)
+            diffs = np.abs(av - bv)
+            finite = diffs[~np.isnan(diffs)]
+            max_float_diff = max(max_float_diff, float(finite.max()) if len(finite) else 0.0)
             if not ok.all():
                 i = int(np.argmin(ok))
                 result["problems"].append(
@@ -96,7 +108,9 @@ def compare_mart(mart: str, old: pd.DataFrame, new: pd.DataFrame, keys: list[str
                 )
         else:
             av, bv = _as_objects(a), _as_objects(b)
-            neq = av != bv
+            # pandas missing-value semantics make None != None come out True;
+            # a NULL on both sides is agreement, not drift
+            neq = (av != bv) & ~(av.isna() & bv.isna())
             if neq.any():
                 i = int(np.argmax(neq.to_numpy()))
                 result["problems"].append(
