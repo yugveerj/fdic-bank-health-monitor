@@ -185,3 +185,7 @@ One line per decision; full rationales in [docs/decisions.md](docs/decisions.md)
   (2026-07-05). Same macros and marts the own-property export will use; the
   funnel is closed because the sample's early weeks lack add_to_cart while
   purchases occur.
+- Orchestration stays GitHub Actions cron; [orchestration/](orchestration/)
+  runs the same pipeline as a local Airflow DAG to demonstrate the pattern
+  (2026-07-05). An always-on scheduler would be the priciest component in
+  the stack for zero added reliability at this cadence.

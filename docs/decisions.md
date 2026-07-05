@@ -4,6 +4,21 @@ Architecture-level decisions and the reasoning behind them, newest first. The
 README carries a one-line version of each; this file is the full account. Each
 entry records what I chose, what I tried first, and what broke along the way.
 
+## 2026-07-05 — Airflow demonstrates the DAG; production stays on Actions cron
+
+`orchestration/` runs the ingestion pipeline as a real Airflow DAG under
+docker-compose — three FDIC pulls in series so one polite client talks to
+the API at a time, FRED alongside, dbt build once both branches land. It
+ran green end-to-end locally ([screenshot](../orchestration/airflow_run.png)),
+writing to an isolated `airflow_raw` dataset that reproduced the production
+row counts exactly (27,836 / 28,369 / 4,115). Production orchestration
+remains GitHub Actions cron, and that's a cost decision stated plainly: a
+weekly refresh and a daily quarter-check cost nothing on Actions, while an
+always-on scheduler would be the most expensive component in the stack for
+zero added reliability at this cadence. The DAG file contains no ingestion
+logic of its own — it schedules the same modules the workflows call, which
+is the whole point of the demonstration.
+
 ## 2026-07-05 — GA4 telemetry: production-only gtag, five events, no PII
 
 The site now carries Google Analytics (property FDIC Bank Health Monitor,

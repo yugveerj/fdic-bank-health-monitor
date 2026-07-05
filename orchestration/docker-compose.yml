@@ -1,0 +1,48 @@
+# Local Airflow running the ingestion pipeline as an explicit DAG.
+# Production orchestration stays GitHub Actions cron (see decisions.md) —
+# this exists to demonstrate the DAG pattern on the same code. Everything
+# here is local-demo configuration, not production posture: auth is
+# disabled, deps install at container start, and the DAG writes to an
+# isolated raw dataset (airflow_raw), never fdic_raw.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 10
+
+  airflow:
+    image: apache/airflow:3.2.2
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: standalone
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      # local demo only: no login wall
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "True"
+      # dev-image shortcut for local experiments; a real deployment bakes an image
+      _PIP_ADDITIONAL_REQUIREMENTS: "httpx pandas pyarrow google-cloud-bigquery dbt-core dbt-bigquery"
+      GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/gcloud/application_default_credentials.json
+      GCP_PROJECT: fdic-monitor
+      BQ_RAW_DATASET: airflow_raw   # isolated — the DAG never touches fdic_raw
+      PYTHONPATH: /opt/airflow/repo
+      DBT_PROFILES_DIR: /opt/airflow/repo/dbt
+    env_file:
+      # FRED_API_KEY if you have one; without it the fred task lands an
+      # empty raw table and dbt still builds (same as keyless local dev)
+      - path: ../.env
+        required: false
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ..:/opt/airflow/repo
+      - ~/.config/gcloud:/opt/airflow/gcloud:ro
