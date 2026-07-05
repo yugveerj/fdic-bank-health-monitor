@@ -4,6 +4,37 @@ Architecture-level decisions and the reasoning behind them, newest first. The
 README carries a one-line version of each; this file is the full account. Each
 entry records what I chose, what I tried first, and what broke along the way.
 
+## 2026-07-05 — Why we re-platformed: DuckDB/MotherDuck → BigQuery
+
+Nothing was wrong with the v1 warehouse. MotherDuck ran this project's
+megabytes without complaint, the free tier covered it, and DuckDB's SQL was
+a pleasure. The move is about legibility, not capability: the same
+engineering reads very differently to a recruiter or an ATS screen when it
+runs on BigQuery, GCS, and Workload Identity Federation than when it runs on
+a warehouse most screeners haven't heard of. v2 re-platforms onto named,
+high-recognition tools without giving up anything that made v1 good — the
+automation, the tests, the lineage, the frozen backtest.
+
+The non-negotiable was that the numbers could not move. The migration ran
+behind a hard parity gate, recorded in [migration_validation.md]
+(migration_validation.md): raw row counts exact on every slice, all five
+marts within 1e-9 of the MotherDuck originals (worst observed difference
+6.4e-13), the 989-composite freeze equivalence proof reproduced, and the
+published 2023 backtest ranks — Silvergate 2/128, SVB 1/35, Signature 2/35,
+First Republic 8/35 — verified to the row on BigQuery before anything
+merged. The dialect differences that could have silently shifted ranks
+(BigQuery has no MEDIAN; approximate quantiles were never an option) are
+itemized in [migration_notes.md](migration_notes.md), the biggest being
+exact `PERCENTILE_CONT` windows for every median and MAD.
+
+Auth ended up keyless everywhere: Workload Identity Federation worked on the
+first configured run (one missing API enablement aside), so no
+service-account JSON key exists — not in the repo, not in Actions secrets,
+not on any laptop. Evidence turned out to need almost nothing: its page SQL
+runs on DuckDB-WASM against extracted parquet regardless of the source, so
+only the nine source queries moved to GoogleSQL and DuckDB stays in the
+stack exactly where it earns its keep, in the browser.
+
 ## 2026-07-04 — v2 ingestion writes to BigQuery through staging + MERGE
 
 First step of the v2 re-platform (PROJECT_SPEC_V2.md): on the `v2-bigquery`
