@@ -297,6 +297,38 @@ def worksheet_trend(name: str, measures: list[str]) -> str:
     </worksheet>"""
 
 
+def phone_layout(leaves: list[str], root_id: int, flow_id: int) -> str:
+    """The load schema requires devicelayouts to hold at least one
+    devicelayout. Mirrors Desktop's auto-generated Phone layout: container
+    zones get fresh ids, content zones keep the ids of their desktop
+    counterparts; Desktop recomputes the geometry on open."""
+    body = "\n".join(leaves)
+    return f"""      <devicelayouts>
+        <devicelayout auto-generated='true' name='Phone'>
+          <size maxheight='700' minheight='700' sizing-mode='vscroll' />
+          <zones>
+            <zone h='100000' id='{root_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
+              <zone h='94666' id='{flow_id}' param='vert' type-v2='layout-flow' w='98700' x='650' y='2667'>
+{body}
+              </zone>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='8' />
+              </zone-style>
+            </zone>
+          </zones>
+        </devicelayout>
+      </devicelayouts>"""
+
+
+def phone_leaf(zid: int, y: int, h: int, px: int, attrs: str) -> str:
+    return f"""                <zone fixed-size='{px}' h='{h}' id='{zid}' is-fixed='true' {attrs} w='98700' x='650' y='{y}'>
+{zone_style()}
+                </zone>"""
+
+
 def zone_style() -> str:
     return """              <zone-style>
                 <format attr='border-color' value='#000000' />
@@ -352,7 +384,12 @@ def dashboard_explorer() -> str:
           </zone-style>
         </zone>
       </zones>
-      <devicelayouts />
+{phone_layout([
+    phone_leaf(25, 2667, 10000, 100, f"name='Distribution' param='[{DS_PEER}].[none:peer_band:nk]' type-v2='filter'"),
+    phone_leaf(26, 12667, 10000, 100, f"name='Distribution' param='[{DS_PEER}].[none:metric:nk]' type-v2='filter'"),
+    phone_leaf(23, 22667, 36000, 300, "name='Distribution' show-title='true'"),
+    phone_leaf(28, 58667, 36000, 300, "name='Tails' show-title='true'"),
+], 60, 61)}
     </dashboard>"""
 
 
@@ -383,7 +420,11 @@ def dashboard_profile() -> str:
           </zone-style>
         </zone>
       </zones>
-      <devicelayouts />
+{phone_layout([
+    phone_leaf(42, 2667, 8000, 80, f"name='Trend - size and capital' param='[{DS_TREND}].[none:bank_name:nk]' type-v2='filter'"),
+    phone_leaf(43, 10667, 42000, 300, "name='Trend - size and capital' show-title='true'"),
+    phone_leaf(44, 52667, 42000, 300, "name='Trend - funding and margin' show-title='true'"),
+], 62, 63)}
     </dashboard>"""
 
 

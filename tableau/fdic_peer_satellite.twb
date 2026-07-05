@@ -601,7 +601,55 @@
           </zone-style>
         </zone>
       </zones>
-      <devicelayouts />
+      <devicelayouts>
+        <devicelayout auto-generated='true' name='Phone'>
+          <size maxheight='700' minheight='700' sizing-mode='vscroll' />
+          <zones>
+            <zone h='100000' id='60' type-v2='layout-basic' w='100000' x='0' y='0'>
+              <zone h='94666' id='61' param='vert' type-v2='layout-flow' w='98700' x='650' y='2667'>
+                <zone fixed-size='100' h='10000' id='25' is-fixed='true' name='Distribution' param='[federated.0fdicpeer0000000000000000000].[none:peer_band:nk]' type-v2='filter' w='98700' x='650' y='2667'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+                <zone fixed-size='100' h='10000' id='26' is-fixed='true' name='Distribution' param='[federated.0fdicpeer0000000000000000000].[none:metric:nk]' type-v2='filter' w='98700' x='650' y='12667'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+                <zone fixed-size='300' h='36000' id='23' is-fixed='true' name='Distribution' show-title='true' w='98700' x='650' y='22667'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+                <zone fixed-size='300' h='36000' id='28' is-fixed='true' name='Tails' show-title='true' w='98700' x='650' y='58667'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+              </zone>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='8' />
+              </zone-style>
+            </zone>
+          </zones>
+        </devicelayout>
+      </devicelayouts>
     </dashboard>
     <dashboard name='Bank profile'>
       <style />
@@ -654,7 +702,47 @@
           </zone-style>
         </zone>
       </zones>
-      <devicelayouts />
+      <devicelayouts>
+        <devicelayout auto-generated='true' name='Phone'>
+          <size maxheight='700' minheight='700' sizing-mode='vscroll' />
+          <zones>
+            <zone h='100000' id='62' type-v2='layout-basic' w='100000' x='0' y='0'>
+              <zone h='94666' id='63' param='vert' type-v2='layout-flow' w='98700' x='650' y='2667'>
+                <zone fixed-size='80' h='8000' id='42' is-fixed='true' name='Trend - size and capital' param='[federated.0fdictrend000000000000000000].[none:bank_name:nk]' type-v2='filter' w='98700' x='650' y='2667'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+                <zone fixed-size='300' h='42000' id='43' is-fixed='true' name='Trend - size and capital' show-title='true' w='98700' x='650' y='10667'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+                <zone fixed-size='300' h='42000' id='44' is-fixed='true' name='Trend - funding and margin' show-title='true' w='98700' x='650' y='52667'>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='4' />
+              </zone-style>
+                </zone>
+              </zone>
+              <zone-style>
+                <format attr='border-color' value='#000000' />
+                <format attr='border-style' value='none' />
+                <format attr='border-width' value='0' />
+                <format attr='margin' value='8' />
+              </zone-style>
+            </zone>
+          </zones>
+        </devicelayout>
+      </devicelayouts>
     </dashboard>
   </dashboards>
   <windows source-height='51'>
