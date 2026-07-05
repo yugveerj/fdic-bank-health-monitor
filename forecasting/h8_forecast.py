@@ -24,7 +24,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from google.cloud import bigquery
 
-from forecasting import methods
+from forecasting import bqml, methods
 from ingestion.fred_h8 import SERIES
 
 log = logging.getLogger(__name__)
@@ -51,9 +51,13 @@ def main() -> int:
     if not project:
         raise SystemExit("GCP_PROJECT is not set — see .env.example")
     marts = f"{project}.{os.environ.get('BQ_MARTS_DATASET', 'analytics')}"
+    ml_dataset = f"{project}.{os.environ.get('BQ_ML_DATASET', 'ml')}"
 
     client = bigquery.Client(project=project)
     try:
+        ds = bigquery.Dataset(ml_dataset)
+        ds.location = os.environ.get("BQ_LOCATION", "US")
+        client.create_dataset(ds, exists_ok=True)
         df = client.query_and_wait(
             f"SELECT series_id, series_title, obs_date, value_billions "
             f"FROM `{marts}.stg_fred__h8` ORDER BY obs_date"
@@ -69,13 +73,21 @@ def main() -> int:
         for series_id, title in SERIES.items():
             y = weekly_series(df, series_id)
             scores = methods.evaluate(y)
+            # third candidate: BigQuery ML ARIMA_PLUS, same protocol (spec D5)
+            scores = pd.concat(
+                [scores, pd.DataFrame([bqml.backtest(client, marts, ml_dataset, series_id, y)])],
+                ignore_index=True,
+            )
             chosen = methods.select_method(scores)
             log.info("%s: %s", series_id, ", ".join(
                 f"{r.method} sMAPE {r.smape:.3f}%" for r in scores.itertuples()))
             log.info("%s: publishing %s%s", series_id, chosen,
                      "" if chosen != methods.BASELINE else " (no candidate beat the baseline)")
 
-            path = methods.forecast_with_intervals(y, chosen)
+            if chosen == bqml.METHOD:
+                path = bqml.forecast_with_intervals(client, marts, ml_dataset, series_id)
+            else:
+                path = methods.forecast_with_intervals(y, chosen)
             trained_through = y.index[-1]
             for r in path.itertuples():
                 forecast_rows.append({

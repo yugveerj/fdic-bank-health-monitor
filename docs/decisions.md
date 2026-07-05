@@ -42,6 +42,13 @@ throughout: the input allowlist is the four H.8 aggregates (bank-level
 forecasting is prohibited and the module has no path to it), and a gap in
 the weekly grid stops the run instead of getting imputed.
 
+Addendum, same day: the spec update added BigQuery ML's ARIMA_PLUS as a
+third candidate. It runs the identical rolling-origin protocol — the origins
+come from the same shared constants, scripted as one CREATE MODEL per origin
+in the `ml` dataset — and competes under the same ties-lose publishing rule.
+The weekly run got slower by a dozen minutes of model training; that's the
+cost of refusing to give any method a friendlier yardstick than the others.
+
 ## 2026-07-05 — Why we re-platformed: DuckDB/MotherDuck → BigQuery
 
 Nothing was wrong with the v1 warehouse. MotherDuck ran this project's

@@ -165,8 +165,9 @@ order by obs_date
 A weekly forecast of the sector aggregates above — sector totals only, never
 individual banks. Each series is forecast by whichever method survived a
 rolling-origin backtest against a seasonal-naive baseline ("this year looks
-like last year"); where nothing beat the baseline, the baseline is published
-and the table below says so.
+like last year"); the candidates — ETS, ARIMA, and BigQuery ML's ARIMA_PLUS —
+all run the same protocol, and where nothing beat the baseline, the baseline
+is published and the table below says so.
 
 ```sql fc_series_list
 select distinct series_title from fdic.h8_forecasts order by 1
