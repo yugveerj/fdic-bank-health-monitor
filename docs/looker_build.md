@@ -7,18 +7,30 @@ any future re-point is one click.
 
 ## 1. One click: create the pre-wired report
 
+A blank report carries exactly ONE embedded data source and takes unaliased
+`ds.` parameters — aliased `ds.dsN` blocks only work against a template's
+existing aliases (learned from the live error, confirmed in the docs). So
+the link wires the primary source; the other two get added in the editor.
+
 Open this as the Google account that owns `fdic-monitor` (it becomes the
 report and data-source owner; its credentials serve viewers):
 
 ```
-https://lookerstudio.google.com/reporting/create?r.reportName=FDIC%20Bank%20Health%20Monitor%20-%20Looker%20Satellite&ds.*.connector=bigQuery&ds.*.type=TABLE&ds.*.projectId=fdic-monitor&ds.*.datasetId=analytics&ds.ds0.tableId=fct_bank_quarters&ds.ds0.datasourceName=fct_bank_quarters&ds.ds1.tableId=mart_outlier_flags&ds.ds1.datasourceName=mart_outlier_flags&ds.ds2.tableId=mart_h8_forecasts&ds.ds2.datasourceName=mart_h8_forecasts
+https://lookerstudio.google.com/reporting/create?r.reportName=FDIC%20Bank%20Health%20Monitor%20-%20Looker%20Satellite&ds.connector=bigQuery&ds.type=TABLE&ds.projectId=fdic-monitor&ds.datasetId=analytics&ds.tableId=fct_bank_quarters&ds.datasourceName=fct_bank_quarters
 ```
 
 Looker Studio opens an unsaved report named `FDIC Bank Health Monitor -
-Looker Satellite` with three data sources attached. Click **Save** (or
+Looker Satellite` with `fct_bank_quarters` attached. Click **Save** (or
 "Edit and share") to persist it.
 
-## 2. Build the pages (the one part no API can do)
+## 2. Add the other two data sources (~1 minute each)
+
+**Resource → Manage added data sources → Add a data source → BigQuery** →
+project `fdic-monitor` → dataset `analytics` → table `mart_outlier_flags`
+→ Add. Repeat for `mart_h8_forecasts` (and `mart_h8_forecast_backtest` if
+you want the error table on page 3).
+
+## 3. Build the pages (the one part no API can do)
 
 Every design decision made in advance; ~20 minutes.
 
@@ -57,7 +69,7 @@ Every design decision made in advance; ~20 minutes.
 > bank's condition. Source: FDIC BankFind Suite API.
 > https://yugveerj.github.io/fdic-bank-health-monitor/
 
-## 3. Configure credentials + caching (once)
+## 4. Configure credentials + caching (once)
 
 Resource → Manage added data sources: each source should show **Owner's
 credentials** (default — it's what lets anonymous viewers see data). Leave
@@ -65,7 +77,7 @@ data freshness at **12 hours**: it's the cache that keeps public viewers
 from spending BigQuery quota. Free-tier math: the marts are megabytes and
 the free tier is 1 TiB of query processing a month — this rounds to $0.
 
-## 4. Publish
+## 5. Publish
 
 Share → Manage access → link settings → **Unlisted: anyone on the Internet
 with the link can view**. Walk the "Review data access" dialog. Send back
