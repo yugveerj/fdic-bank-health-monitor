@@ -45,6 +45,15 @@ jobs:
       - name: Build site meta + quality tables
         run: uv run python -m scripts.build_site_meta
 
+      # the downloadable peer report — runs after dbt so it always reads the
+      # marts this deploy publishes; skips cleanly until the public reports
+      # bucket exists (owner-gated go-live, docs/gcp_setup.md §6)
+      - name: Generate + upload the Excel peer report
+        if: ${{ vars.GCS_REPORTS_BUCKET != '' }}
+        env:
+          GCS_REPORTS_BUCKET: ${{ vars.GCS_REPORTS_BUCKET }}
+        run: uv run python -m reporting.excel_report
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22

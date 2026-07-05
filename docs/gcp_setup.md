@@ -109,7 +109,26 @@ Then add a repo variable `GCS_ARCHIVE_BUCKET` = `fdic-monitor-archive`.
 (The public reports bucket is a separate Phase D decision — nothing public
 is created here.)
 
-## 6. Local dev (optional, for running ingestion from this machine)
+## 6. Public reports bucket (Phase D2 — THE net-new public surface)
+
+This is the one deliberately public thing: a bucket serving the generated
+Excel peer report, and per the standing rule it will only ever contain
+derived public-data reports. Creating it is the go-live approval action:
+
+```sh
+gcloud storage buckets create gs://fdic-monitor-reports --project fdic-monitor \
+  --location US --uniform-bucket-level-access
+
+gcloud storage buckets add-iam-policy-binding gs://fdic-monitor-reports \
+  --member allUsers --role roles/storage.objectViewer
+```
+
+Then add a repo variable `GCS_REPORTS_BUCKET` = `fdic-monitor-reports`.
+The next deploy generates and uploads `reports/bank_peer_report_<YYYYQn>.xlsx`
+plus `reports/latest.xlsx`, and I'll add the download link to the dashboard
+once the first upload is verified.
+
+## 7. Local dev (optional, for running ingestion from this machine)
 
 ```sh
 # install the gcloud CLI (macOS): brew install --cask google-cloud-sdk
