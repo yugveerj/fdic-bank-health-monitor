@@ -33,11 +33,11 @@ deployed pages today.
 
 | Event | Trigger | Properties | Destination property | Status |
 |---|---|---|---|---|
-| `bank_selected` | Bank chosen in the "Institution (closed banks included)" dropdown on the bank profile page | `cert` INT, `peer_band` STRING | monitor property (Phase E) | planned |
-| `metric_selected` | Metric chosen in the "Metric" dropdown on the peer-group explorer | `metric` STRING | monitor property (Phase E) | planned |
-| `excel_download` | Click on the "downloadable Excel peer report" link on the index page | none — the link is versionless `latest.xlsx`, so there is no version to record | monitor property (Phase E) | planned |
-| `tableau_click` | Outbound click on the "Tableau Public satellite" link on the index page | none | monitor property (Phase E) | planned |
-| `looker_click` | Outbound click on the "Looker Studio report" link on the index page | none | monitor property (Phase E) | planned |
+| `bank_selected` | Bank chosen in the "Institution (closed banks included)" dropdown on the bank profile page | `bank` STRING — the option's display label ("Name — City, ST"); the cert never reaches the DOM the listener sees, and the label is public institution data | FDIC Bank Health Monitor (G-44RCFYRK9W) | live |
+| `metric_selected` | Metric chosen in the "Metric" dropdown on the peer-group explorer | `metric` STRING | FDIC Bank Health Monitor (G-44RCFYRK9W) | live |
+| `excel_download` | Click on any `latest.xlsx` link (versionless, so there is no version to record) | none | FDIC Bank Health Monitor (G-44RCFYRK9W) | live |
+| `tableau_click` | Outbound click on any `public.tableau.com` link | none | FDIC Bank Health Monitor (G-44RCFYRK9W) | live |
+| `looker_click` | Outbound click on any `datastudio.google.com` / `lookerstudio.google.com` link | none | FDIC Bank Health Monitor (G-44RCFYRK9W) | live |
 
 ## Public-sample events — Stage-1 marts
 
