@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8' ?>
 
-<workbook original-version='18.1' source-platform='mac' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+<workbook original-version='18.1' source-build='2026.1.1 (20261.26.0410.0924)' source-platform='mac' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
   <preferences>
     <preference name='ui.encoding.shelf.height' value='24' />
     <preference name='ui.shelf.height' value='26' />
@@ -122,7 +122,7 @@
       <column-instance column='[value]' derivation='Avg' name='[avg:value:qk]' pivot='key' type='quantitative' />
       <column-instance column='[robust_z]' derivation='Avg' name='[avg:robust_z:qk]' pivot='key' type='quantitative' />
       <column-instance column='[peer_median]' derivation='Avg' name='[avg:peer_median:qk]' pivot='key' type='quantitative' />
-      <layout dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <style>
         <style-rule element='mark'>
           <encoding attr='color' field='[usr:Calculation_fdicbeyond2sigma0001:nk]' type='palette'>
@@ -358,7 +358,7 @@
       <column-instance column='[loans_to_deposits]' derivation='Avg' name='[avg:loans_to_deposits:qk]' pivot='key' type='quantitative' />
       <column-instance column='[efficiency_ratio_pct]' derivation='Avg' name='[avg:efficiency_ratio_pct:qk]' pivot='key' type='quantitative' />
       <column-instance column='[noncurrent_loans_ratio_pct]' derivation='Avg' name='[avg:noncurrent_loans_ratio_pct:qk]' pivot='key' type='quantitative' />
-      <layout dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
     </datasource>
   </datasources>
   <worksheets>
@@ -410,7 +410,6 @@
         <rows />
         <cols>[federated.0fdicpeer0000000000000000000].[avg:value:qk]</cols>
       </table>
-      <simple-id uuid='{F1D10001-0000-4000-8000-000000000001}' />
     </worksheet>
     <worksheet name='Tails'>
       <table>
@@ -458,7 +457,6 @@
         <rows>[federated.0fdicpeer0000000000000000000].[none:bank_name:nk]</rows>
         <cols />
       </table>
-      <simple-id uuid='{F1D10002-0000-4000-8000-000000000002}' />
     </worksheet>
     <worksheet name='Trend - size and capital'>
       <table>
@@ -493,7 +491,6 @@
         <rows>([federated.0fdictrend000000000000000000].[avg:total_assets_bn:qk] + [federated.0fdictrend000000000000000000].[avg:equity_to_assets:qk])</rows>
         <cols>[federated.0fdictrend000000000000000000].[none:report_date:qk]</cols>
       </table>
-      <simple-id uuid='{F1D10003-0000-4000-8000-000000000030}' />
     </worksheet>
     <worksheet name='Trend - funding and margin'>
       <table>
@@ -530,13 +527,13 @@
         <rows>([federated.0fdictrend000000000000000000].[avg:uninsured_deposit_share:qk] + [federated.0fdictrend000000000000000000].[avg:brokered_deposit_share:qk] + [federated.0fdictrend000000000000000000].[avg:net_interest_margin_pct:qk])</rows>
         <cols>[federated.0fdictrend000000000000000000].[none:report_date:qk]</cols>
       </table>
-      <simple-id uuid='{F1D10004-0000-4000-8000-000000000040}' />
     </worksheet>
   </worksheets>
   <dashboards>
-    <dashboard enable-sort-zone-taborder='true' name='Peer explorer'>
+    <dashboard name='Peer explorer'>
       <style />
       <size maxheight='900' maxwidth='1100' minheight='900' minwidth='1100' sizing-mode='fixed' />
+      <datasources />
       <zones>
         <zone h='100000' id='20' type-v2='layout-basic' w='100000' x='0' y='0'>
           <zone h='96800' id='21' param='vert' type-v2='layout-flow' w='98700' x='650' y='1600'>
@@ -604,11 +601,12 @@
           </zone-style>
         </zone>
       </zones>
-      <simple-id uuid='{F1D1000A-0000-4000-8000-00000000000A}' />
+      <devicelayouts />
     </dashboard>
-    <dashboard enable-sort-zone-taborder='true' name='Bank profile'>
+    <dashboard name='Bank profile'>
       <style />
       <size maxheight='900' maxwidth='1100' minheight='900' minwidth='1100' sizing-mode='fixed' />
+      <datasources />
       <zones>
         <zone h='100000' id='40' type-v2='layout-basic' w='100000' x='0' y='0'>
           <zone h='96800' id='41' param='vert' type-v2='layout-flow' w='98700' x='650' y='1600'>
@@ -656,7 +654,7 @@
           </zone-style>
         </zone>
       </zones>
-      <simple-id uuid='{F1D1000B-0000-4000-8000-00000000000B}' />
+      <devicelayouts />
     </dashboard>
   </dashboards>
   <windows source-height='51'>
@@ -740,12 +738,6 @@
           </strip>
         </edge>
       </cards>
-    </window>
-    <window class='dashboard' maximized='true' name='Peer explorer'>
-      <active id='-1' />
-    </window>
-    <window class='dashboard' name='Bank profile'>
-      <active id='-1' />
     </window>
   </windows>
 </workbook>

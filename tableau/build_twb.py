@@ -121,7 +121,7 @@ def datasource_peer() -> str:
       <column-instance column='[value]' derivation='Avg' name='[avg:value:qk]' pivot='key' type='quantitative' />
       <column-instance column='[robust_z]' derivation='Avg' name='[avg:robust_z:qk]' pivot='key' type='quantitative' />
       <column-instance column='[peer_median]' derivation='Avg' name='[avg:peer_median:qk]' pivot='key' type='quantitative' />
-      <layout dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
       <style>
         <style-rule element='mark'>
           <encoding attr='color' field='[usr:{CALC_BEYOND}:nk]' type='palette'>
@@ -151,7 +151,7 @@ def datasource_trend() -> str:
       <aliases enabled='yes' />
 {column_decls(TREND_COLS)}
 {chr(10).join(instances)}
-      <layout dim-ordering='alphabetic' measure-ordering='alphabetic' show-structure='true' />
+      <layout dim-ordering='alphabetic' dim-percentage='0.5' measure-ordering='alphabetic' measure-percentage='0.4' show-structure='true' />
     </datasource>"""
 
 
@@ -214,7 +214,6 @@ def worksheet_distribution() -> str:
         <rows />
         <cols>[{DS_PEER}].[avg:value:qk]</cols>
       </table>
-      <simple-id uuid='{{F1D10001-0000-4000-8000-000000000001}}' />
     </worksheet>"""
 
 
@@ -257,11 +256,10 @@ def worksheet_tails() -> str:
         <rows>[{DS_PEER}].[none:bank_name:nk]</rows>
         <cols />
       </table>
-      <simple-id uuid='{{F1D10002-0000-4000-8000-000000000002}}' />
     </worksheet>"""
 
 
-def worksheet_trend(name: str, uuid_hex: str, measures: list[str]) -> str:
+def worksheet_trend(name: str, measures: list[str]) -> str:
     rows = " + ".join(f"[{DS_TREND}].[avg:{m}:qk]" for m in measures)
     if len(measures) > 1:
         rows = f"({rows})"
@@ -296,7 +294,6 @@ def worksheet_trend(name: str, uuid_hex: str, measures: list[str]) -> str:
         <rows>{rows}</rows>
         <cols>[{DS_TREND}].[none:report_date:qk]</cols>
       </table>
-      <simple-id uuid='{{F1D1000{uuid_hex}-0000-4000-8000-0000000000{uuid_hex}0}}' />
     </worksheet>"""
 
 
@@ -319,9 +316,10 @@ def text_zone(zid: int, x: int, y: int, w: int, h: int) -> str:
 
 
 def dashboard_explorer() -> str:
-    return f"""    <dashboard enable-sort-zone-taborder='true' name='Peer explorer'>
+    return f"""    <dashboard name='Peer explorer'>
       <style />
       <size maxheight='900' maxwidth='1100' minheight='900' minwidth='1100' sizing-mode='fixed' />
+      <datasources />
       <zones>
         <zone h='100000' id='20' type-v2='layout-basic' w='100000' x='0' y='0'>
           <zone h='96800' id='21' param='vert' type-v2='layout-flow' w='98700' x='650' y='1600'>
@@ -354,14 +352,15 @@ def dashboard_explorer() -> str:
           </zone-style>
         </zone>
       </zones>
-      <simple-id uuid='{{F1D1000A-0000-4000-8000-00000000000A}}' />
+      <devicelayouts />
     </dashboard>"""
 
 
 def dashboard_profile() -> str:
-    return f"""    <dashboard enable-sort-zone-taborder='true' name='Bank profile'>
+    return f"""    <dashboard name='Bank profile'>
       <style />
       <size maxheight='900' maxwidth='1100' minheight='900' minwidth='1100' sizing-mode='fixed' />
+      <datasources />
       <zones>
         <zone h='100000' id='40' type-v2='layout-basic' w='100000' x='0' y='0'>
           <zone h='96800' id='41' param='vert' type-v2='layout-flow' w='98700' x='650' y='1600'>
@@ -384,7 +383,7 @@ def dashboard_profile() -> str:
           </zone-style>
         </zone>
       </zones>
-      <simple-id uuid='{{F1D1000B-0000-4000-8000-00000000000B}}' />
+      <devicelayouts />
     </dashboard>"""
 
 
@@ -416,24 +415,20 @@ def windows() -> str:
             <card pane-specification-id='0' param='[{DS_PEER}].[usr:{CALC_BEYOND}:nk]' type='color' />
           </strip>
         </edge>"""
+    # no dashboard windows: the load schema demands (viewpoints, active,
+    # device-preview) for those and Desktop synthesizes them anyway
     return "\n".join([
         ws_window("Distribution", color_card),
         ws_window("Tails"),
         ws_window("Trend - size and capital"),
         ws_window("Trend - funding and margin"),
-        """    <window class='dashboard' maximized='true' name='Peer explorer'>
-      <active id='-1' />
-    </window>""",
-        """    <window class='dashboard' name='Bank profile'>
-      <active id='-1' />
-    </window>""",
     ])
 
 
 def build() -> str:
     return f"""<?xml version='1.0' encoding='utf-8' ?>
 
-<workbook original-version='18.1' source-platform='mac' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+<workbook original-version='18.1' source-build='2026.1.1 (20261.26.0410.0924)' source-platform='mac' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
   <preferences>
     <preference name='ui.encoding.shelf.height' value='24' />
     <preference name='ui.shelf.height' value='26' />
@@ -445,8 +440,8 @@ def build() -> str:
   <worksheets>
 {worksheet_distribution()}
 {worksheet_tails()}
-{worksheet_trend("Trend - size and capital", "3", ["total_assets_bn", "equity_to_assets"])}
-{worksheet_trend("Trend - funding and margin", "4", ["uninsured_deposit_share", "brokered_deposit_share", "net_interest_margin_pct"])}
+{worksheet_trend("Trend - size and capital", ["total_assets_bn", "equity_to_assets"])}
+{worksheet_trend("Trend - funding and margin", ["uninsured_deposit_share", "brokered_deposit_share", "net_interest_margin_pct"])}
   </worksheets>
   <dashboards>
 {dashboard_explorer()}
