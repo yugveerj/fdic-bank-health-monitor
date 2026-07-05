@@ -10,6 +10,7 @@ Evidence, published on GitHub Pages and refreshed by CI with no manual steps.
 **Live dashboard:** <https://yugveerj.github.io/fdic-bank-health-monitor/>
 **Tableau Public satellite:** [peer explorer & bank profiles](https://public.tableau.com/app/profile/yugveer.jain/viz/FDICBankHealthMonitorPeerSatellite/Peerexplorer) — same marts, served through a Google Sheet extract
 **Excel peer report:** [latest.xlsx](https://storage.googleapis.com/fdic-monitor-reports/reports/latest.xlsx) — sector summary + the quarter's movers per band, regenerated on every refresh
+**Looker Studio satellite:** [sector, peers & forecasts](https://datastudio.google.com/reporting/440389ab-7504-4169-b09e-b11f01a19a73) — same marts over the native BigQuery connector, viewer access on owner's credentials with a 12-hour cache
 
 ## Why this exists
 
